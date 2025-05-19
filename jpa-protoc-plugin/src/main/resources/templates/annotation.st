@@ -1,0 +1,2 @@
+annotation(ann) ::= <<<ann>
+>>

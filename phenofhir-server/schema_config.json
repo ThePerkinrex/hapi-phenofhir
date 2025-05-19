@@ -1,0 +1,468 @@
+{
+	"base_module": "phenopackets.schema.util",
+	"messages": {
+		"org.phenopackets.schema.v2.Phenopacket": {
+			"name": "Phenopacket",
+			"primary_key": "id",
+			"fields": {
+				"id": {
+					"cardinality": "required"
+				},
+				"subject": {
+					"cardinality": "optional"
+				},
+				"meta_data": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.Family": {
+			"name": "Family",
+			"primary_key": "id",
+			"fields": {
+				"id": {
+					"cardinality": "required"
+				},
+				"proband": {
+					"cardinality": "required"
+				},
+				"consanguinous_parents": {
+					"cardinality": "optional"
+				},
+				"pedigree": {
+					"cardinality": "required"
+				},
+				"meta_data": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.Cohort": {
+			"name": "Cohort",
+			"primary_key": "id",
+			"fields": {
+				"id": {
+					"cardinality": "required"
+				},
+				"description": {
+					"cardinality": "optional"
+				},
+				"meta_data": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Individual": {
+			"name": "Individual",
+			"primary_key": "id",
+			"fields": {
+				"id": {
+					"cardinality": "required"
+				},
+				"date_of_birth": {
+					"cardinality": "optional"
+				},
+				"time_at_last_encounter": {
+					"cardinality": "optional"
+				},
+				"vital_status": {
+					"cardinality": "optional"
+				},
+				"sex": {
+					"cardinality": "optional"
+				},
+				"karyotypic_sex": {
+					"cardinality": "optional"
+				},
+				"gender": {
+					"cardinality": "optional"
+				},
+				"taxonomy": {
+					"cardinality": "optional"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.PhenotypicFeature": {
+			"name": "PhenotypicFeature",
+			"insert": true,
+			"fields": {
+				"type": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Measurement": {
+			"name": "Measurement",
+			"insert": true,
+			"fields": {
+				"assay": {
+					"cardinality": "required"
+				},
+				"measurement_value": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Value": {
+			"name": "Value",
+			"insert": true,
+			"fields": {
+				"value": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.OntologyClass": {
+			"name": "OntologyClass",
+			"primary_key": "id",
+			"fields": {
+				"id": {
+					"cardinality": "required"
+				},
+				"label": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Quantity": {
+			"name": "Quantity",
+			"insert": true,
+			"fields": {
+				"unit": {
+					"cardinality": "required"
+				},
+				"value": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Biosample": {
+			"name": "Biosample",
+			"primary_key": "id",
+			"fields": {
+				"id": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Disease": {
+			"name": "Disease",
+			"insert": true,
+			"fields": {
+				"term": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.MedicalAction": {
+			"name": "MedicalAction",
+			"insert": true,
+			"fields": {
+				"action": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.File": {
+			"name": "File",
+			"primary_key": "uri",
+			"fields": {
+				"uri": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.MetaData": {
+			"name": "MetaData",
+			"insert": true,
+			"fields": {
+				"created": {
+					"cardinality": "required"
+				},
+				"created_by": {
+					"cardinality": "required"
+				},
+				"phenopacket_schema_version": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Pedigree": {
+			"name": "Pedigree",
+			"insert": true,
+			"fields": {}
+		},
+		"org.phenopackets.schema.v2.core.TimeElement": {
+			"name": "TimeElement",
+			"insert": true,
+			"fields": {
+				"element": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.VitalStatus": {
+			"name": "VitalStatus",
+			"insert": true,
+			"fields": {
+				"status": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.ExternalReference": {
+			"name": "ExternalReference",
+			"primary_key": "id",
+			"fields": {
+				"id": {
+					"cardinality": "required",
+					"generate_if_missing": {
+						"generator": "UUIDv4-CURIE",
+						"parameters": {
+							"prefix": "phenofhireref"
+						}
+					}
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Evidence": {
+			"name": "Evidence",
+			"insert": true,
+			"fields": {
+				"evidence_code": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Procedure": {
+			"name": "Procedure",
+			"insert": true,
+			"fields": {
+				"code": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.GestationalAge": {
+			"name": "GestationalAge",
+			"insert": true,
+			"fields": {
+				"weeks": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Age": {
+			"name": "Age",
+			"insert": true,
+			"fields": {
+				"iso8601duration": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.AgeRange": {
+			"name": "AgeRange",
+			"insert": true,
+			"fields": {
+				"start": {
+					"cardinality": "required"
+				},
+				"end": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.TimeInterval": {
+			"name": "TimeInterval",
+			"insert": true,
+			"fields": {
+				"start": {
+					"cardinality": "required"
+				},
+				"end": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.ReferenceRange": {
+			"name": "ReferenceRange",
+			"insert": true,
+			"fields": {
+				"unit": {
+					"cardinality": "required"
+				},
+				"low": {
+					"cardinality": "required"
+				},
+				"high": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.TypedQuantity": {
+			"name": "TypedQuantity",
+			"insert": true,
+			"fields": {
+				"type": {
+					"cardinality": "required"
+				},
+				"unit": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Interpretation": {
+			"name": "Interpretation",
+			"primary_key": "id",
+			"fields": {
+				"id": {
+					"cardinality": "required"
+				},
+				"progress_status": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Diagnosis": {
+			"name": "Diagnosis",
+			"insert": true,
+			"fields": {
+				"disease": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.GenomicInterpretation": {
+			"name": "GenomicInterpretation",
+			"insert": true,
+			"fields": {
+				"subject_or_biosample_id": {
+					"cardinality": "required"
+				},
+				"interpretation_status": {
+					"cardinality": "required"
+				},
+				"call": {
+					"cardinality": "required"
+				}
+			}
+		},
+		"org.phenopackets.schema.v2.core.ComplexValue": {
+			"name": "ComplexValue",
+			"insert": true
+		},
+		"org.phenopackets.schema.v2.core.VariantInterpretation": {
+			"name": "VariantInterpretation",
+			"insert": true,
+			"fields": {
+				"acmg_pathogenicity_classification": {"cardinality": "required"},
+				"therapeutic_actionability": {"cardinality": "required"},
+				"variation_descriptor": {"cardinality": "required"}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Treatment": {
+			"name": "Treatment",
+			"insert": true,
+			"fields": {
+				"agent": {"cardinality": "required"}
+			}
+		},
+		"org.phenopackets.schema.v2.core.RadiationTherapy": {
+			"name": "RadiationTherapy",
+			"insert": true,
+			"fields": {
+				"modality": {"cardinality": "required"},
+				"body_site": {"cardinality": "required"},
+				"dosage": {"cardinality": "required"},
+				"fractions": {"cardinality": "required"}
+			}
+		},
+		"org.phenopackets.schema.v2.core.TherapeuticRegimen": {
+			"name": "TherapeuticRegimen",
+			"insert": true,
+			"fields": {
+				"identifier": {"cardinality": "required"},
+				"regimen_status": {"cardinality": "required"}
+			}
+		},
+		"org.phenopackets.schema.v2.core.DoseInterval": {
+			"name": "DoseInterval",
+			"insert": true,
+			"fields": {
+				"quantity": {"cardinality": "required"},
+				"schedule_frequency": {"cardinality": "required"},
+				"interval": {"cardinality": "required"}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Resource": {
+			"name": "Resource",
+			"primary_key": "id",
+			"fields": {
+				"id": {"cardinality": "required"},
+				"name": {"cardinality": "required"},
+				"namespace_prefix": {"cardinality": "required"},
+				"url": {"cardinality": "required"},
+				"version": {"cardinality": "required"},
+				"iri_prefix": {"cardinality": "required"}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Update": {
+			"name": "Update",
+			"insert": true,
+			"fields": {
+				"timestamp": {"cardinality": "required"}
+			}
+		},
+		"org.phenopackets.schema.v2.core.Pedigree.Person": {
+			"name": "Person",
+			"insert": true,
+			"fields": {
+				"family_id": {"cardinality": "required"},
+				"individual_id": {"cardinality": "required"},
+				"paternal_id": {"cardinality": "required"},
+				"maternal_id": {"cardinality": "required"},
+				"sex": {"cardinality": "required"},
+				"affected_status": {"cardinality": "required"}
+			}
+		},
+		"org.ga4gh.vrsatile.v1.GeneDescriptor": {
+			"name": "GeneDescriptor",
+			"primary_key": "value_id",
+			"fields": {
+				"value_id": {"cardinality": "required"},
+				"symbol": {"cardinality": "required"}
+			}
+		},
+		"org.ga4gh.vrsatile.v1.Extension": {
+			"name": "Extension",
+			"primary_key": "name",
+			"fields": {
+				"name": {"cardinality": "required"},
+				"value": {"cardinality": "required"}
+			}
+		},
+		"org.ga4gh.vrsatile.v1.Expression": {
+			"name": "Expression",
+			"insert": true,
+			"fields": {
+				"syntax": {"cardinality": "required"},
+				"value": {"cardinality": "required"}
+			}
+		},
+		"org.ga4gh.vrsatile.v1.VariationDescriptor": {
+			"name": "VariationDescriptor",
+			"primary_key": "id",
+			"fields": {
+				"id": {"cardinality": "required"},
+				"molecule_context": {"cardinality": "required"}
+			}
+		},
+		"org.ga4gh.vrsatile.v1.VcfRecord": {
+			"as_protobuf": true
+		},
+		"org.ga4gh.vrs.v1.Variation": {
+			"as_protobuf": true
+		}
+	}
+}
