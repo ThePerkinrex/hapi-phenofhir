@@ -1,5 +1,9 @@
 package es.upm.etsiinf.tfg.juanmahou.plugin.types;
 
+import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.JavaType;
+import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.ListType;
+import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.SetType;
+import es.upm.etsiinf.tfg.juanmahou.plugin.types.source.RepeatedSourceType;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.source.SourceType;
 
 import java.util.Objects;
@@ -19,6 +23,14 @@ public class TypeMapping {
 
     public JavaType getJavaType() {
         return javaType;
+    }
+
+    public TypeMapping toRepeated() {
+        return new TypeMapping(new RepeatedSourceType(source), new ListType(javaType));
+    }
+
+    public TypeMapping toSet() {
+        return new TypeMapping(new RepeatedSourceType(source), new SetType(javaType));
     }
 
     @Override

@@ -16,6 +16,12 @@
     <description>Custom protoc plugin to generate JPA entities</description>
 
     <dependencies>
+        <dependency>
+            <groupId>es.upm.etsiinf.tfg.juanmahou</groupId>
+            <artifactId>jpa-protoc-generators</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- needed for protoc plugin APIs -->
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -57,31 +63,31 @@
     <build>
         <plugins>
             <!-- ensure the JAR is executable and has a Main‐Class -->
-            <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>es.upm.etsiinf.tfg.juanmahou.plugin.Main</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
+<!--            <plugin>-->
+<!--                <artifactId>maven-jar-plugin</artifactId>-->
+<!--                <configuration>-->
+<!--                    <archive>-->
+<!--                        <manifest>-->
+<!--                            <mainClass>es.upm.etsiinf.tfg.juanmahou.plugin.Main</mainClass>-->
+<!--                        </manifest>-->
+<!--                    </archive>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
 
-            <!-- optionally shade in dependencies so it really is self-contained -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals><goal>shade</goal></goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+<!--            &lt;!&ndash; optionally shade in dependencies so it really is self-contained &ndash;&gt;-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-shade-plugin</artifactId>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <phase>package</phase>-->
+<!--                        <goals><goal>shade</goal></goals>-->
+<!--                        <configuration>-->
+<!--                            <createDependencyReducedPom>false</createDependencyReducedPom>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
         </plugins>
     </build>
 

@@ -1,9 +1,13 @@
 package es.upm.etsiinf.tfg.juanmahou.plugin.types;
 
-import java.util.function.Supplier;
+import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.JavaType;
 
-public record Annotation(JavaType annotationType, Supplier<String> extra) {
-    public Annotation(JavaType annotationType, Supplier<String> extra) {
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+public record Annotation(JavaType annotationType, List<String> extra) {
+    public Annotation(JavaType annotationType, List<String> extra) {
         this.annotationType = annotationType;
         this.extra = extra;
     }
@@ -13,6 +17,6 @@ public record Annotation(JavaType annotationType, Supplier<String> extra) {
     }
 
     public String toString() {
-        return "@" + annotationType().toString() + (extra() == null ? "" : "(" + extra().get() + ")");
+        return "@" + annotationType().toString() + ((extra == null || extra.isEmpty()) ? "" : "(" + String.join(", ", extra) + ")");
     }
 }

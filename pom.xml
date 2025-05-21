@@ -30,6 +30,7 @@
     </properties>
 
     <modules>
+        <module>jpa-protoc-generators</module>
         <module>jpa-protoc-plugin</module>
         <module>phenofhir-server</module>
     </modules>

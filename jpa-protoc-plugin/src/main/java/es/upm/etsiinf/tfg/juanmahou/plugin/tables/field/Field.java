@@ -2,8 +2,10 @@ package es.upm.etsiinf.tfg.juanmahou.plugin.tables.field;
 
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.Table;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.Annotation;
-import es.upm.etsiinf.tfg.juanmahou.plugin.types.JavaType;
+import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.JavaType;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -13,9 +15,9 @@ public class Field {
     private final Table table;
     private final String name;
     private final JavaType type;
-    private final Annotation[] annotations;
+    private final List<Annotation> annotations;
 
-    public Field(Table table, String name, JavaType type, Annotation... annotations) {
+    public Field(Table table, String name, JavaType type, List<Annotation> annotations) {
         this.table = Objects.requireNonNull(table);
         this.name = Objects.requireNonNull(name);
         this.type = Objects.requireNonNull(type);
@@ -34,7 +36,7 @@ public class Field {
         return type;
     }
 
-    public Annotation[] getAnnotations() {
-        return annotations;
+    public List<Annotation> getAnnotations() {
+        return Collections.unmodifiableList(annotations);
     }
 }

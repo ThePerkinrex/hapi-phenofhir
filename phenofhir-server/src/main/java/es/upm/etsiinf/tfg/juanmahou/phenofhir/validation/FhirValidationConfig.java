@@ -1,4 +1,4 @@
-package es.upm.etsiinf.tfg.juanmahou.phenofhir;
+package es.upm.etsiinf.tfg.juanmahou.phenofhir.validation;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;

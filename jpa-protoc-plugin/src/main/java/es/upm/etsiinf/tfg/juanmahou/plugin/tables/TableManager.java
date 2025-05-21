@@ -61,7 +61,8 @@ public class TableManager {
         logger.info("Loading table with id {}", id);
         Descriptors.Descriptor msg = pool.get(id);
         if (msg == null) {
-            throw new IllegalStateException("Descriptor not found for id: " + id);
+            logger.warn("Descriptor not found for id: {}", id);
+            return null;
         }
 
         String name = (cfg.getName() != null)
@@ -85,20 +86,6 @@ public class TableManager {
             fileTables.computeIfAbsent(file, k -> new HashSet<>()).add(id);
         }
         return table;
-    }
-
-    /**
-     * Expose the descriptor pool (map).
-     */
-    public DescriptorPool getPool() {
-        return pool;
-    }
-
-    /**
-     * Iterate over all Tables collected from a given proto file.
-     */
-    public Stream<Table> getAllTablesInFile(String file) {
-        return fileTables.getOrDefault(file, Collections.emptySet()).stream().map(id -> getTable(id, "all_in_file")).filter(Objects::nonNull);
     }
 
     public Stream<Table> getAllTables() {

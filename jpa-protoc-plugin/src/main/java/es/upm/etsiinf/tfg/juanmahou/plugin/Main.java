@@ -5,9 +5,8 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.compiler.PluginProtos;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.Config;
 import es.upm.etsiinf.tfg.juanmahou.plugin.render.TableRenderer;
-import es.upm.etsiinf.tfg.juanmahou.plugin.tables.Table;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.TableManager;
-import es.upm.etsiinf.tfg.juanmahou.plugin.types.ClassType;
+import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.ClassType;
 import es.upm.etsiinf.tfg.juanmahou.plugin.util.DescriptorPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class Main {
@@ -86,6 +83,10 @@ public class Main {
             builder.setName(classType.toString().replace('.', '/') + ".java");
             builder.setContent(TableRenderer.render(t));
         });
+
+        var builder = response.addFileBuilder();
+        builder.setName("dependencies.dot");
+        builder.setContent(DependencyManager.getInstance().toDot());
 
         // 7) Generate model files
 //        Set<Path> createdInits = new HashSet<>();

@@ -9,15 +9,14 @@ import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.SimpleBundleProvider;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4b.model.IdType;
+import org.hl7.fhir.r4b.model.Patient;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 
-@Component
+
 public class PatientResourceProvider implements IResourceProvider {
     @Override
     public Class<? extends IBaseResource> getResourceType() {

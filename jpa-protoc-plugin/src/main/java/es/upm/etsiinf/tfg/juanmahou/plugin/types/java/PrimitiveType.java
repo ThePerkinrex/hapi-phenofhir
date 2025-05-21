@@ -1,4 +1,4 @@
-package es.upm.etsiinf.tfg.juanmahou.plugin.types;
+package es.upm.etsiinf.tfg.juanmahou.plugin.types.java;
 
 import java.util.Objects;
 

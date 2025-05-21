@@ -11,6 +11,9 @@ public class ConfigField {
 
     private ConfigCardinality cardinality = ConfigCardinality.INHERIT;
 
+    @JsonProperty("generate_if_missing")
+    private ConfigGenerator generator;
+
     public Map<String, String> getAsFkFields() {
         return asFkFields;
     }
@@ -27,11 +30,20 @@ public class ConfigField {
         this.cardinality = cardinality;
     }
 
+    public ConfigGenerator getGenerator() {
+        return generator;
+    }
+
+    public void setGenerator(ConfigGenerator generator) {
+        this.generator = generator;
+    }
+
     @Override
     public String toString() {
         return "ConfigField{" +
                 "asFkFields=" + asFkFields +
                 ", cardinality=" + cardinality +
+                ", generator=" + generator +
                 '}';
     }
 }
