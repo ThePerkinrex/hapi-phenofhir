@@ -19,5 +19,13 @@ public static class Key {
     public int hashCode() {
         return java.util.Objects.hash(<pk.fields:{f | this.<f.name>}; separator=", ">);
     }
+
+    <pk.accessors:{a | <accessor(a, "Key")>}; separator="\n\n">
+
+
+    @Override
+    public String toString() {
+        return "Key {" + <pk.fields:{f | "<f.name>=" + this.<f.name> + ", "}; separator=" + "> + "}";
+    }
 }
 >>

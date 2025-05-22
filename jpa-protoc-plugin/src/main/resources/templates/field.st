@@ -1,4 +1,4 @@
 field(field) ::= <<
 <field.annotations:annotation(); separator="\n">
-public <field.type> <field.name>;
+private <field.type> <field.name><field.defaultValue>;
 >>

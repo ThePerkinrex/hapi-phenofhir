@@ -9,6 +9,7 @@
 	import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.MapperRegistry;
 	import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.NotFoundException;
 	import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResource;
+	import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
 	import jakarta.annotation.PostConstruct;
 	import org.hl7.fhir.r4b.model.Coding;
 	import org.slf4j.Logger;
@@ -50,11 +51,11 @@
 				FhirContext fhirContext,
 				RequestValidatingInterceptor requestValidatingInterceptor,
 				ResponseValidatingInterceptor responseValidatingInterceptor,
-				List<GeneralPhenomicResource> providers
+				GeneralPhenomicResources providers
 		) {
 			RestfulServer server = new RestfulServer(fhirContext);
 			// register your resource providers
-			server.setResourceProviders(providers.toArray(IResourceProvider[]::new));
+			server.setResourceProviders(providers.getResources().toArray(IResourceProvider[]::new));
 			server.registerInterceptor(requestValidatingInterceptor);
 			server.registerInterceptor(responseValidatingInterceptor);
 			ServletRegistrationBean<RestfulServer> servlet =

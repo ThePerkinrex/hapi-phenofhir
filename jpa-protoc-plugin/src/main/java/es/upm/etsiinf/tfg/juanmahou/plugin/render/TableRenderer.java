@@ -21,15 +21,23 @@ public class TableRenderer {
         var fields = table.getFields();
         List<Field> id_fields = primaryKey.stream().map(fields::get).toList();
         List<Field> rest_fields = fields.entrySet().stream().filter(e -> !primaryKey.contains(e.getKey())).map(Map.Entry::getValue).collect(Collectors.toList());
-        rest_fields.addFirst(new Field(table, "id", new PrimitiveType("Key"), List.of(new Annotation(TypeRegistry.EMBEDDED_ID_ANNOTATION))));
+        rest_fields.addFirst(
+                new Field(table,
+                        "id",
+                        new PrimitiveType("Key"),
+                        List.of(new Annotation(TypeRegistry.EMBEDDED_ID_ANNOTATION)),
+                        "new Key()"
+                ));
         ClassType javaType = table.getJavaType();
+        var enums = table.getEnums();
         template.add("package", javaType.getPackageName());
         template.add("name", javaType.getName());
         template.add("entity", new Annotation(TypeRegistry.ENTITY_ANNOTATION));
         template.add("fields", rest_fields);
-        template.add("pk", new PrimaryKey(id_fields));
-        template.add("enum_keys", new ArrayList<>(table.getEnums().keySet()));
-        template.add("enum_values", table.getEnums().values().stream().map(v -> v.stream().map(e -> new Pair<>(e.getKey(), e.getValue())).toList()).toList());
+        template.add("pk", new PrimaryKey(id_fields, id_fields.stream().map(Accessor::new).toList()));
+        template.add("enum_keys", new ArrayList<>(enums.keySet()));
+        template.add("enum_values", enums.values().stream().map(v -> v.stream().map(e -> new Pair<>(e.getKey(), e.getValue())).toList()).toList());
+        template.add("accessors", rest_fields.stream().map(Accessor::new).toList());
         return template.render();
     }
 }

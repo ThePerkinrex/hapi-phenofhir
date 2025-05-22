@@ -7,6 +7,7 @@ import es.upm.etsiinf.tfg.juanmahou.plugin.config.Cardinality;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.ConfigCardinality;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.ConfigField;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.ConfigTable;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.Accessor;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.field.*;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.providers.FilePackageProvider;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.providers.PackageProvider;
@@ -181,8 +182,7 @@ public class Table {
                 }
                 JavaType map = new MapType(key.getJavaType(), val);
                 Field f = new Field(this, mfd.getName(), map, annotations);
-                addField(f);
-                if (oneOfCont != null) oneOfCont.getFields().add(List.of(f));
+                addField(f, oneOfCont);
                 return;
             }else{
                 logger.error("Map key is not a primitive type");
@@ -208,8 +208,7 @@ public class Table {
                     }
                 }
                 Field f = new Field(this, mfd.getName(), mapping.getJavaType(), annotations);
-                addField(f);
-                if (oneOfCont != null) oneOfCont.getFields().add(List.of(f));
+                addField(f, oneOfCont);
                 return;
             }
             String nestedId = messageType.getFullName();
@@ -229,8 +228,7 @@ public class Table {
                     }
                 }
                 Field f = new Field(this, mfd.getName(), mapping.getJavaType(), annotations);
-                addField(f);
-                if (oneOfCont != null) oneOfCont.getFields().add(List.of(f));
+                addField(f, oneOfCont);
 
                 return;
             }
@@ -255,10 +253,11 @@ public class Table {
             List<Annotation> childAnnotations = new ArrayList<>(2);
 
             List<Annotation> annotations = new ArrayList<>(2);
-            JavaType annotationMapping = TypeRegistry.ONE_TO_ONE_ANNOTATION;
+            JavaType annotationMapping = TypeRegistry.ONE_TO_MANY_ANNOTATION;
+            childFieldType = new SetType(childFieldType);
             switch (mfd.getCard()) {
                 case REQUIRED -> {
-                    annotations.add(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of(OPTIONAL_FALSE, LAZY_FETCH)));
+                    annotations.add(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(OPTIONAL_FALSE, LAZY_FETCH)));
 
                     // CHILD ANNOTATIONS
 
@@ -267,11 +266,10 @@ public class Table {
                     annotations.add(new Annotation(TypeRegistry.MANY_TO_MANY_ANNOTATION, List.of(LAZY_FETCH)));
                     mapping = mapping.toSet();
                     // CHILD ANNOTATIONS
-                    childFieldType = new SetType(childFieldType);
                     annotationMapping = TypeRegistry.MANY_TO_MANY_ANNOTATION;
                 }
                 case OPTIONAL -> {
-                    annotations.add(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of(OPTIONAL_TRUE, LAZY_FETCH)));
+                    annotations.add(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(OPTIONAL_TRUE, LAZY_FETCH)));
                     // CHILD ANNOTATIONS
                 }
             }
@@ -280,8 +278,7 @@ public class Table {
 //            child.addMappedByField(this);
 
             Field f = new Field(this, mfd.getName(), mapping.getJavaType(), annotations);
-            addField(f);
-            if (oneOfCont != null) oneOfCont.getFields().add(List.of(f));
+            addField(f, oneOfCont);
 
             child.addMappedByField(f, new Field(child, getSqlName() + "_" + f.getName(), childFieldType, childAnnotations));
 
@@ -308,6 +305,7 @@ public class Table {
             enums.put(enumType,
                     ed.getValues().stream()
                             .map(v -> Map.entry(v.getName(), v.getNumber()))
+                            .sorted(Comparator.comparingInt(Map.Entry::getValue))
                             .collect(Collectors.toList()));
 
             List<Annotation> annotations = new ArrayList<>(List.of(new Annotation(TypeRegistry.ENUMERATED_ANNOTATION, List.of(TypeRegistry.ENUM_TYPE + ".ORDINAL"))));
@@ -325,8 +323,7 @@ public class Table {
             }
 
             Field f = new Field(this, efd.getName(), enumType, annotations);
-            addField(f);
-            if (oneOfCont != null) oneOfCont.getFields().add(List.of(f));
+            addField(f, oneOfCont);
 
             return;
         }
@@ -349,8 +346,7 @@ public class Table {
                 }
             }
             Field f = new Field(this, pfd.getName(), type.getJavaType(), annotations);
-            addField(f);
-            if (oneOfCont != null) oneOfCont.getFields().add(List.of(f));
+            addField(f, oneOfCont);
 
             return;
         }
@@ -364,10 +360,6 @@ public class Table {
         return packageProvider.getPackage() + "." + name;
     }
 
-//    private void addJoinTable(Table t) {
-//        joinTables.add(t);
-//    }
-
     private OneOf addOneOf(String name, boolean required) {
         return oneOfs.computeIfAbsent(name, k -> new OneOf(name, required));
     }
@@ -376,13 +368,19 @@ public class Table {
         fields.put(f.getName(), f);
     }
 
+    private void addField(Field f, OneOf oneOf) {
+        if (oneOf != null) {
+            List<Field> group = List.of(f);
+            f.setOneOf(oneOf);
+            f.setOneOfGroup(group);
+            oneOf.getFields().add(group);
+        }
+        addField(f);
+    }
+
     public void addMappedByField(Field other, Field myField) {
         addField(myField);
     }
-
-//    private void addForeignKey(ForeignKey fk, Table t) {
-//        foreignKeys.add(fk);
-//    }
 
     public String getSqlName() {
         return CaseUtils.toSnakeCase(name);
@@ -402,22 +400,6 @@ public class Table {
 
     public Map<String, Field> getFields() {
         return Collections.unmodifiableMap(fields);
-    }
-
-//    public List<ForeignKey> getForeignKeys() {
-//        return Collections.unmodifiableList(foreignKeys);
-//    }
-
-    public Map<String, OneOf> getOneOfs() {
-        return Collections.unmodifiableMap(oneOfs);
-    }
-
-//    public List<Table> getJoinTables() {
-//        return Collections.unmodifiableList(joinTables);
-//    }
-
-    public Field getField(String name) {
-        return fields.get(name);
     }
 
     public ClassType getJavaType() {

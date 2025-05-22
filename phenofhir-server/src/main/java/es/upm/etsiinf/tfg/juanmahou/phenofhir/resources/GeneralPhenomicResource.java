@@ -18,8 +18,13 @@ import org.hl7.fhir.r4b.model.Reference;
 import org.hl7.fhir.r4b.model.Specimen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Component;
 
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class GeneralPhenomicResource implements IResourceProvider {
     private static final Logger log = LoggerFactory.getLogger(GeneralPhenomicResource.class);
     private final Class<? extends IBaseResource> resource;

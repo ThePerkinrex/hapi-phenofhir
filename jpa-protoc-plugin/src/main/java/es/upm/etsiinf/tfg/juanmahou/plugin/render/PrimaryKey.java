@@ -10,8 +10,10 @@ public class PrimaryKey {
     public Annotation embeddable = new Annotation(TypeRegistry.EMBEDDABLE_ANNOTATION);
 
     public List<Field> fields;
+    public List<Accessor> accessors;
 
-    public PrimaryKey(List<Field> fields) {
+    public PrimaryKey(List<Field> fields, List<Accessor> accessors) {
         this.fields = fields;
+        this.accessors = accessors;
     }
 }

@@ -59,25 +59,24 @@ public class SpecimenResourceProvider implements IResourceProvider {
         log.info("Specimen: {}, profiles: {}", specimen, specimen.getMeta().getProfile());
 
         Biosample bs = new Biosample();
-        bs.id = new Biosample.Key();
+        bs.setId(new Biosample.Key().setId(specimen.getIdentifier().getFirst().getValue()));
         // Biosample Profile restricts this to be present
         // What
-        bs.id.id = specimen.getIdentifier().getFirst().getValue(); // TODO combine with system and other params
         Reference individual = specimen.getSubject();
         if(individual != null && !individual.isEmpty()) {
-            bs.individual_id = individual.getReference(); // TODO What
+            bs.setIndividual_id(individual.getReference()); // TODO What
         }
-        bs.description = specimen.getNote().toString(); // How to convert to string correctly?
+        bs.setDescription(specimen.getNote().toString()); // How to convert to string correctly?
         if(specimen.hasCollection()) {
             var collection = specimen.getCollection();
             if (collection.hasBodySite()) {
                 var bodySite = collection.getBodySite();
                 if (!bodySite.getCoding().isEmpty()) {
                     var coding = bodySite.getCoding().getFirst();
-                    bs.sampled_tissue = ontologyClassCodingMapper.toPheno(coding);
+                    bs.setSampled_tissue(ontologyClassCodingMapper.toPheno(coding));
                     CrudRepository<OntologyClass, OntologyClass.Key> ocr = repositoryProvider.getCrudRepository(OntologyClass.class);
 
-                    ocr.save(bs.sampled_tissue);
+                    ocr.save(bs.getSampled_tissue());
                 }
             }
         }
