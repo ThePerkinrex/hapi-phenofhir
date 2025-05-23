@@ -30,13 +30,13 @@ import java.util.stream.Collectors;
  * Concrete implementation of a Table, managing fields, keys, and generation logic.
  */
 public class Table {
-    private static final String LAZY_FETCH = "fetch = " + TypeRegistry.FETCH_TYPE + ".LAZY";
-    private static final String OPTIONAL_TRUE = "optional = true";
-    private static final String OPTIONAL_FALSE = "optional = false";
-    private static final String NULLABLE_TRUE = "nullable = true";
-    private static final String NULLABLE_FALSE = "nullable = false";
+    public static final String LAZY_FETCH = "fetch = " + TypeRegistry.FETCH_TYPE + ".LAZY";
+    public static final String OPTIONAL_TRUE = "optional = true";
+    public static final String OPTIONAL_FALSE = "optional = false";
+    public static final String NULLABLE_TRUE = "nullable = true";
+    public static final String NULLABLE_FALSE = "nullable = false";
 
-    private static final String CASCADE_PERSIST_MERGE = "cascade = {" + TypeRegistry.CASCADE_TYPE + ".PERSIST, " + TypeRegistry.CASCADE_TYPE + ".MERGE}";
+    public static final String CASCADE_ALL = "cascade = " + TypeRegistry.CASCADE_TYPE + ".ALL";
 
 
     private static final Logger logger = LoggerFactory.getLogger(Table.class);
@@ -248,53 +248,79 @@ public class Table {
                 return;
             }
 
-            JavaType childFieldType = this.getJavaType();
+            List<Annotation> parentAnnotations = List.of();
 
-            List<Annotation> childAnnotations = new ArrayList<>(2);
+            if(mfd.getCard()==Cardinality.REPEATED) mapping = mapping.toSet();
 
-            List<Annotation> annotations = new ArrayList<>(2);
-            JavaType annotationMapping = TypeRegistry.ONE_TO_MANY_ANNOTATION;
-            childFieldType = new SetType(childFieldType);
-            switch (mfd.getCard()) {
-                case REQUIRED -> {
-                    annotations.add(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(OPTIONAL_FALSE, LAZY_FETCH)));
-
-                    // CHILD ANNOTATIONS
-
+            // TODO if part of oneOf -> required goes to optional. child on owned -> optional
+            Field parentField;
+            Field childField = null;
+            if(child.getConfig().isInsert()) {
+                List<Annotation> childAnnotations = List.of();
+                String childFieldName = CaseUtils.toLowerCamelCase(getSqlName() + "_" + mfd.getName());
+                switch (mfd.getCard()) {
+                    case REQUIRED -> {
+                        parentAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of("mappedBy = \"" + childFieldName + '"', LAZY_FETCH)));
+                        childAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of(LAZY_FETCH)));
+                    }
+                    case OPTIONAL -> {
+                        parentAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of("mappedBy = \"" + childFieldName + '"', OPTIONAL_TRUE, LAZY_FETCH)));
+                        childAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of(OPTIONAL_TRUE, LAZY_FETCH)));
+                    }
+                    case REPEATED -> {
+                        parentAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_MANY_ANNOTATION, List.of("mappedBy = \"" + childFieldName + '"', LAZY_FETCH, CASCADE_ALL)));
+                        childAnnotations = List.of(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(LAZY_FETCH)));
+                    }
                 }
-                case REPEATED -> {
-                    annotations.add(new Annotation(TypeRegistry.MANY_TO_MANY_ANNOTATION, List.of(LAZY_FETCH)));
-                    mapping = mapping.toSet();
-                    // CHILD ANNOTATIONS
-                    annotationMapping = TypeRegistry.MANY_TO_MANY_ANNOTATION;
-                }
-                case OPTIONAL -> {
-                    annotations.add(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(OPTIONAL_TRUE, LAZY_FETCH)));
-                    // CHILD ANNOTATIONS
-                }
+                childField = new Field(child, childFieldName, this.getJavaType(), childAnnotations);
+            }else{
+                parentAnnotations = switch (mfd.getCard()) {
+                    case REQUIRED -> List.of(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(LAZY_FETCH)));
+                    case OPTIONAL -> List.of(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(LAZY_FETCH, OPTIONAL_TRUE)));
+                    case REPEATED -> List.of(new Annotation(TypeRegistry.MANY_TO_MANY_ANNOTATION, List.of(LAZY_FETCH)));
+                };
             }
-            childAnnotations.add(new Annotation(annotationMapping, List.of("mappedBy = \"" + mfd.getName() + "\"", LAZY_FETCH)));
             DependencyManager.getInstance().addDependency(fullName(), child.fullName());
-//            child.addMappedByField(this);
-
-            Field f = new Field(this, mfd.getName(), mapping.getJavaType(), annotations);
-            addField(f, oneOfCont);
-
-            child.addMappedByField(f, new Field(child, getSqlName() + "_" + f.getName(), childFieldType, childAnnotations));
-
+            parentField = new Field(this, mfd.getName(), mapping.getJavaType(), parentAnnotations);
+            addField(parentField, oneOfCont);
+            if(childField != null) {
+                child.addMappedByField(parentField, childField);
+            }
 
 
-
-//            MessageFieldDescriptor mfd = (MessageFieldDescriptor) fd;
-//            String nestedId = mfd.getMessageType().getFullName();
-//            TypeMapping tm = TypeRegistry.getMessage(nestedId);
-//            if (tm != null) {
-//                addField(new Field(this, fd.getName(), tm,
-//                        mfd.getCard() == Cardinality.OPTIONAL, extras));
-//                if (oneOfCont!=null) oneOfCont.getFieldGroups().add(Collections.singletonList(fields.get(fd.getName())));
-//                return;
+//            JavaType childFieldType = this.getJavaType();
+//
+//            List<Annotation> childAnnotations = new ArrayList<>(2);
+//
+//            List<Annotation> annotations = new ArrayList<>(2);
+//            JavaType annotationMapping = TypeRegistry.ONE_TO_MANY_ANNOTATION;
+//            childFieldType = new SetType(childFieldType);
+//            switch (mfd.getCard()) {
+//                case REQUIRED -> {
+//                    annotations.add(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(OPTIONAL_FALSE, LAZY_FETCH)));
+//
+//                    // CHILD ANNOTATIONS
+//
+//                }
+//                case REPEATED -> {
+//                    annotations.add(new Annotation(TypeRegistry.MANY_TO_MANY_ANNOTATION, List.of(LAZY_FETCH)));
+//                    mapping = mapping.toSet();
+//                    // CHILD ANNOTATIONS
+//                    annotationMapping = TypeRegistry.MANY_TO_MANY_ANNOTATION;
+//                }
+//                case OPTIONAL -> {
+//                    annotations.add(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(OPTIONAL_TRUE, LAZY_FETCH)));
+//                    // CHILD ANNOTATIONS
+//                }
 //            }
-            // nested and repeated handlers omitted for brevity...
+//            childAnnotations.add(new Annotation(annotationMapping, List.of("mappedBy = \"" + mfd.getName() + "\"", LAZY_FETCH)));
+//            DependencyManager.getInstance().addDependency(fullName(), child.fullName());
+////            child.addMappedByField(this);
+//
+//            Field f = new Field(this, mfd.getName(), mapping.getJavaType(), annotations);
+//            addField(f, oneOfCont);
+//
+//            child.addMappedByField(f, new Field(child, getSqlName() + "_" + f.getName(), childFieldType, childAnnotations));
             return;
         }
 
@@ -404,6 +430,10 @@ public class Table {
 
     public ClassType getJavaType() {
         return new ClassType(packageProvider.getPackage(), name);
+    }
+
+    public ConfigTable getConfig() {
+        return config;
     }
 
     @Override

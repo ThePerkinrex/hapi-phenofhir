@@ -31,7 +31,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>es.upm.etsiinf.tfg.juanmahou</groupId>
-			<artifactId>jpa-protoc-generators</artifactId>
+			<artifactId>jpa-protoc-common</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
@@ -94,6 +94,12 @@
 			<groupId>com.google.protobuf</groupId>
 			<artifactId>protobuf-java</artifactId>
 			<version>${protobuf.version}</version>
+		</dependency>
+
+		<dependency>
+			<!-- brings in jakarta.validation:jakarta.validation-api + org.hibernate.validator:hibernate-validator -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 	</dependencies>
 

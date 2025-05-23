@@ -1,10 +1,15 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+
 import java.util.Map;
 
 public class Config {
-    private Curie curie;
-    private Map<String, Mapping> mappings;
+    @Valid
+    private Curie curie = new Curie();
+    @Valid
+    private Map<String, Mapping> mappings = Map.of();
 
     public Map<String, Mapping> getMappings() {
         return mappings;

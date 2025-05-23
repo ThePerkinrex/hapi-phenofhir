@@ -1,12 +1,13 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.time;
 
 import entities.org.phenopackets.schema.v2.core.TimeElement;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import org.hl7.fhir.r4b.model.DataType;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DataTypeMapper implements Mapper<TimeElement, DataType> {
+public class DataTypeMapper implements FhirMapper<TimeElement, DataType>, PhenoMapper<TimeElement, DataType> {
     private final BaseDateTimeMapper baseDateTimeMapper;
 
     public DataTypeMapper(BaseDateTimeMapper baseDateTimeMapper) {

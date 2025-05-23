@@ -30,5 +30,51 @@ public final class CaseUtils {
                 .replaceAll("_")
                 .toLowerCase();
     }
+
+    /**
+     * Converts a snake_case, kebab-case, or space-separated string to lowerCamelCase.
+     *
+     * @param name the input string
+     * @return the lowerCamelCase equivalent, or null if input is null
+     */
+    public static String toLowerCamelCase(String name) {
+        if (name == null) {
+            return null;
+        }
+        String[] parts = name.split("[_\\-\\s]+");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i].toLowerCase();
+            if (i == 0) {
+                sb.append(part);
+            } else if (!part.isEmpty()) {
+                sb.append(Character.toUpperCase(part.charAt(0)))
+                        .append(part.substring(1));
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Converts a snake_case, kebab-case, or space-separated string to UpperCamelCase (PascalCase).
+     *
+     * @param name the input string
+     * @return the UpperCamelCase equivalent, or null if input is null
+     */
+    public static String toUpperCamelCase(String name) {
+        if (name == null) {
+            return null;
+        }
+        String[] parts = name.split("[_\\-\\s]+");
+        StringBuilder sb = new StringBuilder();
+        for (String rawPart : parts) {
+            String part = rawPart.toLowerCase();
+            if (!part.isEmpty()) {
+                sb.append(Character.toUpperCase(part.charAt(0)))
+                        .append(part.substring(1));
+            }
+        }
+        return sb.toString();
+    }
 }
 

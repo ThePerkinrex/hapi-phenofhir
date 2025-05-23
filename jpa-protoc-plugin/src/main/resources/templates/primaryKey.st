@@ -1,6 +1,6 @@
-primaryKey(pk) ::= <<
+primaryKey(pk, id_iface) ::= <<
 <pk.embeddable>
-public static class Key {
+public static class Key implements <id_iface> {
     <pk.fields:field(); separator="\n">
 
     public Key() {}

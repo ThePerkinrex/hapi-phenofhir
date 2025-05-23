@@ -18,7 +18,7 @@
     <dependencies>
         <dependency>
             <groupId>es.upm.etsiinf.tfg.juanmahou</groupId>
-            <artifactId>jpa-protoc-generators</artifactId>
+            <artifactId>jpa-protoc-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 

@@ -4,29 +4,18 @@
 	import ca.uhn.fhir.rest.server.RestfulServer;
 	import ca.uhn.fhir.rest.server.interceptor.RequestValidatingInterceptor;
 	import ca.uhn.fhir.rest.server.interceptor.ResponseValidatingInterceptor;
-	import entities.org.phenopackets.schema.v2.core.OntologyClass;
-	import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
-	import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.MapperRegistry;
-	import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.NotFoundException;
-	import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResource;
-	import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
-	import jakarta.annotation.PostConstruct;
-	import org.hl7.fhir.r4b.model.Coding;
-	import org.slf4j.Logger;
+    import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
+    import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
 	import org.springframework.boot.SpringApplication;
 	import org.springframework.boot.autoconfigure.SpringBootApplication;
 	import org.springframework.boot.autoconfigure.domain.EntityScan;
 	import org.springframework.boot.web.servlet.ServletRegistrationBean;
-	import org.springframework.context.ApplicationContext;
-	import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Bean;
 	import ca.uhn.fhir.context.FhirContext;
 	import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-	import java.util.List;
-	import java.util.Objects;
-
-	@SpringBootApplication
+    @SpringBootApplication
 	@EntityScan({
 			"es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence",
 			"entities.org.ga4gh.vrsatile.v1",

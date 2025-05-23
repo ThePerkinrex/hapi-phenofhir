@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @MapperIgnore
 @MapperAlias("DiseaseExcluded")
 @Component
-public class DiseaseExcludedMapper implements Mapper<Boolean, CodeableConcept> {
+public class DiseaseExcludedMapper implements FhirMapper<Boolean, CodeableConcept>, PhenoMapper<Boolean, CodeableConcept> {
 
     @Override
     public Class<CodeableConcept> getFhirClass() {

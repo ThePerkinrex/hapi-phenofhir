@@ -1,13 +1,12 @@
-package es.upm.etsiinf.tfg.juanmahou.phenofhir.resources;
+package es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.mapper;
 
 import es.upm.etsiinf.tfg.juanmahou.entities.id.Id;
 import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Mapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.MapperRegistry;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.NotFoundException;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.ResourceField;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,13 +14,12 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
-public class ResourceMapping<Pheno extends WithId<? extends Id>, FHIR extends IBaseResource> implements Mapper<Pheno, FHIR> {
+public class ToFhirConfiguredMapping<Pheno extends WithId<? extends Id>, FHIR extends IBaseResource> implements FhirMapper<Pheno, FHIR>, Initializable {
     private class Translation<A, B> {
         private final Logger log = LoggerFactory.getLogger(Translation.class);
         private final ResourceField<Pheno, A> phenoField;
         private final ResourceField<FHIR, B> fhirField;
         private final FhirMapper<A, B> fhirMapper;
-        private final PhenoMapper<A, B> phenoMapper;
 
         Translation(es.upm.etsiinf.tfg.juanmahou.phenofhir.config.mapping.Translation mapping) {
             phenoField = new ResourceField<>(pheno, mapping.getPhenoName());
@@ -35,26 +33,14 @@ public class ResourceMapping<Pheno extends WithId<? extends Id>, FHIR extends IB
                     } else {
                         throw new RuntimeException("Mapper of name " + mapping.getMapper() + " does not map the correct types");
                     }
-                    var phenoMapper = registry.getPhenoMapper(mapping.getMapper());
-                    if (phenoMapper.getPhenoClass().equals(phenoField.getFieldClass()) && phenoMapper.getFhirClass().equals(fhirField.getFieldClass())) {
-                        this.phenoMapper = (PhenoMapper<A, B>) phenoMapper;
-                    } else {
-                        throw new RuntimeException("Mapper of name " + mapping.getMapper() + " does not map the correct types");
-                    }
                 } else {
                     fhirMapper = registry.getFhirMapper(phenoField.getFieldClass(), fhirField.getFieldClass());
-                    phenoMapper = registry.getPhenoMapper(phenoField.getFieldClass(), fhirField.getFieldClass());
                 }
 
             } catch (NotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
-
-        public void fhirToPheno(Pheno pheno, FHIR fhir) throws Exception {
-            phenoField.set(pheno, phenoMapper.toPheno(fhirField.get(fhir)));
-        }
-
         public void phenoToFhir(FHIR fhir, Pheno pheno) throws Exception {
             fhirField.set(fhir, fhirMapper.toFHIR(phenoField.get(pheno)));
         }
@@ -64,22 +50,21 @@ public class ResourceMapping<Pheno extends WithId<? extends Id>, FHIR extends IB
     private final Class<Pheno> pheno;
 
     private final Constructor<? extends FHIR> fhirConstructor;
-    private final Constructor<Pheno> phenoConstructor;
 
     private List<Translation<Object, Object>> translations;
     private final MapperRegistry registry;
     private final Mapping mapping;
 
-    public ResourceMapping(Class<Pheno> pheno, Class<? extends FHIR> fhir, Mapping mapping, MapperRegistry registry) throws NoSuchMethodException {
+    public ToFhirConfiguredMapping(Class<Pheno> pheno, Class<? extends FHIR> fhir, Mapping mapping, MapperRegistry registry) throws NoSuchMethodException {
         this.registry = registry;
         this.pheno = pheno;
         this.fhir = fhir;
-        this.phenoConstructor = pheno.getConstructor();
         this.fhirConstructor = fhir.getConstructor();
         this.mapping = mapping;
         this.translations = List.of();
     }
 
+    @Override
     public void initialize() {
         this.translations = mapping.getTranslations().stream().map(Translation<Object, Object>::new).toList();
     }
@@ -98,14 +83,6 @@ public class ResourceMapping<Pheno extends WithId<? extends Id>, FHIR extends IB
         return pheno;
     }
 
-    @Override
-    public Pheno toPheno(FHIR fhir) throws Exception {
-        Pheno res = phenoConstructor.newInstance();
-        for(Translation<?, ?> t : translations) {
-            t.fhirToPheno(res, fhir);
-        }
-        return res;
-    }
 
     @Override
     public FHIR toFHIR(Pheno pheno) throws Exception {

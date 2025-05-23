@@ -1,11 +1,16 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public class Curie {
     public static class System {
+        @NotEmpty
         private String system;
         private String version;
 
@@ -55,7 +60,8 @@ public class Curie {
                     '}';
         }
     }
-    private Map<String, List<System>> mapping;
+    @Valid
+    private Map<String, List<System>> mapping = Map.of();
 
     public Map<String, List<System>> getMapping() {
         return mapping;

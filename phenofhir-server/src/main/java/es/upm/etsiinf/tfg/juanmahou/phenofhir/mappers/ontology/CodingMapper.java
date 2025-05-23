@@ -3,10 +3,10 @@ package es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.ontology;
 import entities.org.phenopackets.schema.v2.core.OntologyClass;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Curie;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.CurieMapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.CurieMappingRepository;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.MapperAlias;
 import org.hl7.fhir.r4b.model.Coding;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class CodingMapper implements Mapper<OntologyClass, Coding> {
+public class CodingMapper implements FhirMapper<OntologyClass, Coding>, PhenoMapper<OntologyClass, Coding> {
 
     private Config config;
     private CurieMappingRepository repository;

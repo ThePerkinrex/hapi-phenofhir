@@ -1,6 +1,7 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.wrapper;
 
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
 import jakarta.persistence.Entity;
 import org.slf4j.Logger;
@@ -9,13 +10,13 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Persistence implements WrapperFactory {
-    private static class PersitencyWrapper<A,B> implements Mapper<A, B> {
+public class Persistence implements PhenoWrapperFactory {
+    private static class PersitencyWrapper<A,B> implements PhenoMapper<A, B> {
         private static final Logger log = LoggerFactory.getLogger(PersitencyWrapper.class);
-        private final Mapper<A, B> mapper;
+        private final PhenoMapper<A, B> mapper;
         private final CrudRepository<A, ?> repository;
 
-        public PersitencyWrapper(Mapper<A, B> mapper, CrudRepository<A, ?> repository) {
+        public PersitencyWrapper(PhenoMapper<A, B> mapper, CrudRepository<A, ?> repository) {
             this.mapper = mapper;
             this.repository = repository;
         }
@@ -28,11 +29,6 @@ public class Persistence implements WrapperFactory {
         @Override
         public Class<A> getPhenoClass() {
             return mapper.getPhenoClass();
-        }
-
-        @Override
-        public B toFHIR(A a) throws Exception {
-            return mapper.toFHIR(a);
         }
 
         @Override
@@ -57,13 +53,13 @@ public class Persistence implements WrapperFactory {
      * @return if the wrapper should be applied to the mapper
      */
     @Override
-    public <A, B> boolean shouldWrap(Mapper<A, B> mapper) {
+    public <A, B> boolean shouldWrap(PhenoMapper<A, B> mapper) {
         // FIXME Maybe more classes can be persisted
         return mapper.getPhenoClass().isAnnotationPresent(Entity.class);
     }
 
     @Override
-    public <A, B> Mapper<A, B> wrap(Mapper<A, B> mapper) {
+    public <A, B> PhenoMapper<A, B> wrap(PhenoMapper<A, B> mapper) {
         return new PersitencyWrapper<>(mapper, repositoryProvider.getCrudRepository(mapper.getPhenoClass()));
     }
 }

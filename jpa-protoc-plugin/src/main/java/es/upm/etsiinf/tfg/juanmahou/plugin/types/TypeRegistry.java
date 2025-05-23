@@ -1,6 +1,8 @@
 package es.upm.etsiinf.tfg.juanmahou.plugin.types;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import es.upm.etsiinf.tfg.juanmahou.entities.id.Id;
+import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.ClassType;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.JavaType;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.PrimitiveType;
@@ -71,4 +73,7 @@ public class TypeRegistry {
     public static final JavaType LIST = new ClassType(List.class);
     public static final JavaType SET = new ClassType(Set.class);
     public static final JavaType MAP = new ClassType(Map.class);
+
+    public static final JavaType ID_IFACE = new ClassType(Id.class);
+    public static final JavaType WITH_ID_IFACE = new ClassType(WithId.class);
 }

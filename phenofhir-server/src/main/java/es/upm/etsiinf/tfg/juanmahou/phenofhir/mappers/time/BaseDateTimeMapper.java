@@ -1,7 +1,7 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.time;
 
-import entities.org.phenopackets.schema.v2.core.TimeElement;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import org.hl7.fhir.r4b.model.BaseDateTimeType;
 import org.hl7.fhir.r4b.model.InstantType;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.Date;
 
 @Component
-public class BaseDateTimeMapper implements Mapper<Instant, BaseDateTimeType> {
+public class BaseDateTimeMapper implements FhirMapper<Instant, BaseDateTimeType>, PhenoMapper<Instant, BaseDateTimeType> {
     @Override
     public Class<? extends BaseDateTimeType> getFhirClass() {
         return BaseDateTimeType.class;

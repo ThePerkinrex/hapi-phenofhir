@@ -5,8 +5,8 @@ import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import entities.org.phenopackets.schema.v2.core.OntologyClass;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.BiosampleRepository;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.MapperRegistry;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.NotFoundException;
@@ -17,17 +17,17 @@ import entities.org.phenopackets.schema.v2.core.Biosample;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.Repository;
-import org.springframework.stereotype.Component;
 
 public class SpecimenResourceProvider implements IResourceProvider {
     private static final Logger log = LoggerFactory.getLogger(SpecimenResourceProvider.class);
 
-    private Mapper<OntologyClass, Coding> ontologyClassCodingMapper;
+    private FhirMapper<OntologyClass, Coding> ontologyClassCodingFhirMapper;
+    private PhenoMapper<OntologyClass, Coding> ontologyClassCodingPhenoMapper;
     private RepositoryProvider repositoryProvider;
 
     public SpecimenResourceProvider(MapperRegistry mapperRegistry, RepositoryProvider repositoryProvider) throws NotFoundException {
-        ontologyClassCodingMapper = mapperRegistry.getMapper(OntologyClass.class, Coding.class);
+        ontologyClassCodingFhirMapper = mapperRegistry.getFhirMapper(OntologyClass.class, Coding.class);
+        ontologyClassCodingPhenoMapper = mapperRegistry.getPhenoMapper(OntologyClass.class, Coding.class);
         this.repositoryProvider = repositoryProvider;
     }
 
@@ -73,7 +73,7 @@ public class SpecimenResourceProvider implements IResourceProvider {
                 var bodySite = collection.getBodySite();
                 if (!bodySite.getCoding().isEmpty()) {
                     var coding = bodySite.getCoding().getFirst();
-                    bs.setSampled_tissue(ontologyClassCodingMapper.toPheno(coding));
+                    bs.setSampled_tissue(ontologyClassCodingPhenoMapper.toPheno(coding));
                     CrudRepository<OntologyClass, OntologyClass.Key> ocr = repositoryProvider.getCrudRepository(OntologyClass.class);
 
                     ocr.save(bs.getSampled_tissue());

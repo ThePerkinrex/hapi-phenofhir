@@ -1,5 +1,6 @@
 package es.upm.etsiinf.tfg.juanmahou.plugin.render;
 
+import es.upm.etsiinf.tfg.juanmahou.entities.Owned;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.Table;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.field.Field;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.Annotation;
@@ -38,6 +39,9 @@ public class TableRenderer {
         template.add("enum_keys", new ArrayList<>(enums.keySet()));
         template.add("enum_values", enums.values().stream().map(v -> v.stream().map(e -> new Pair<>(e.getKey(), e.getValue())).toList()).toList());
         template.add("accessors", rest_fields.stream().map(Accessor::new).toList());
+        template.add("id_iface", TypeRegistry.ID_IFACE);
+        template.add("with_id_iface", TypeRegistry.WITH_ID_IFACE);
+        template.add("owned", table.getConfig().isInsert() ? new Annotation(new ClassType(Owned.class)).toString() : "");
         return template.render();
     }
 }

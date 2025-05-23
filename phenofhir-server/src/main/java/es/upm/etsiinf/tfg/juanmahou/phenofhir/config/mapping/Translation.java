@@ -1,9 +1,16 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.config.mapping;
 
+import jakarta.validation.constraints.NotEmpty;
+
 public class Translation {
+
+    @NotEmpty
     private String phenoName;
+
+    @NotEmpty
     private String fhirName;
     private String description;
+
     private String mapper;
 
     public String getPhenoName() {

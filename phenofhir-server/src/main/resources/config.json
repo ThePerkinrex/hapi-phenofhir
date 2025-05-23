@@ -18,10 +18,6 @@
 		}
 	},
 	"mappings": {
-		"Specimen": {
-			"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Biosample",
-			"target": "entities.org.phenopackets.schema.v2.core.Biosample"
-		},
 		"Condition": {
 			"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Disease",
 			"target": "entities.org.phenopackets.schema.v2.core.Disease",
