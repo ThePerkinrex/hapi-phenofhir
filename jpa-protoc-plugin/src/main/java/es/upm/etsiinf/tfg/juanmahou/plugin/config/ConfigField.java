@@ -6,21 +6,10 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConfigField {
-    @JsonProperty("as_fk_fields")
-    private Map<String, String> asFkFields;
-
     private ConfigCardinality cardinality = ConfigCardinality.INHERIT;
 
     @JsonProperty("generate_if_missing")
     private ConfigGenerator generator;
-
-    public Map<String, String> getAsFkFields() {
-        return asFkFields;
-    }
-
-    public void setAsFkFields(Map<String, String> asFkFields) {
-        this.asFkFields = asFkFields;
-    }
 
     public ConfigCardinality getCardinality() {
         return cardinality;
@@ -41,8 +30,7 @@ public class ConfigField {
     @Override
     public String toString() {
         return "ConfigField{" +
-                "asFkFields=" + asFkFields +
-                ", cardinality=" + cardinality +
+                "cardinality=" + cardinality +
                 ", generator=" + generator +
                 '}';
     }

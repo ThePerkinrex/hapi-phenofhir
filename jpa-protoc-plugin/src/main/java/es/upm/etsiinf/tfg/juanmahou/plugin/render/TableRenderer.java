@@ -41,7 +41,7 @@ public class TableRenderer {
         template.add("accessors", rest_fields.stream().map(Accessor::new).toList());
         template.add("id_iface", TypeRegistry.ID_IFACE);
         template.add("with_id_iface", TypeRegistry.WITH_ID_IFACE);
-        template.add("owned", table.getConfig().isInsert() ? new Annotation(new ClassType(Owned.class)).toString() : "");
+        template.add("owned", table.getOwned());
         return template.render();
     }
 }

@@ -2,6 +2,7 @@ package es.upm.etsiinf.tfg.juanmahou.plugin.tables;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import es.upm.etsiinf.tfg.juanmahou.entities.Owned;
 import es.upm.etsiinf.tfg.juanmahou.plugin.DependencyManager;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.Cardinality;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.ConfigCardinality;
@@ -55,6 +56,7 @@ public class Table {
     private final Map<JavaType, List<Map.Entry<String, Integer>>> enums = new LinkedHashMap<>();
 //    private final List<Table> joinTables = new ArrayList<>();
     private final Map<String, AbstractFieldDescriptor> fieldDescriptors;
+    private Annotation owned;
 
     public Table(TableManager manager,
                  ConfigTable config,
@@ -258,21 +260,32 @@ public class Table {
             if(child.getConfig().isInsert()) {
                 List<Annotation> childAnnotations = List.of();
                 String childFieldName = CaseUtils.toLowerCamelCase(getSqlName() + "_" + mfd.getName());
+                JavaType parentAnnType = TypeRegistry.ONE_TO_ONE_ANNOTATION;
+                List<String> parentAnnotationParams = new ArrayList<>(
+                        child.getConfig().isBackReference() ?
+                                List.of("mappedBy = \"" + childFieldName + '"', LAZY_FETCH) :
+                                List.of(LAZY_FETCH)
+                );
+
                 switch (mfd.getCard()) {
                     case REQUIRED -> {
-                        parentAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of("mappedBy = \"" + childFieldName + '"', LAZY_FETCH)));
                         childAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of(LAZY_FETCH)));
                     }
                     case OPTIONAL -> {
-                        parentAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of("mappedBy = \"" + childFieldName + '"', OPTIONAL_TRUE, LAZY_FETCH)));
+                        parentAnnotationParams.add(OPTIONAL_TRUE);
                         childAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_ONE_ANNOTATION, List.of(OPTIONAL_TRUE, LAZY_FETCH)));
                     }
                     case REPEATED -> {
-                        parentAnnotations = List.of(new Annotation(TypeRegistry.ONE_TO_MANY_ANNOTATION, List.of("mappedBy = \"" + childFieldName + '"', LAZY_FETCH, CASCADE_ALL)));
+                        parentAnnType = TypeRegistry.ONE_TO_MANY_ANNOTATION;
+                        parentAnnotationParams.add(CASCADE_ALL);
                         childAnnotations = List.of(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(LAZY_FETCH)));
                     }
                 }
-                childField = new Field(child, childFieldName, this.getJavaType(), childAnnotations);
+                parentAnnotations = List.of(new Annotation(parentAnnType, parentAnnotationParams));
+                if (child.getConfig().isBackReference()) {
+                    childField = new Field(child, childFieldName, this.getJavaType(), childAnnotations);
+                    child.setOwned(this.getJavaType());
+                }
             }else{
                 parentAnnotations = switch (mfd.getCard()) {
                     case REQUIRED -> List.of(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(LAZY_FETCH)));
@@ -430,6 +443,15 @@ public class Table {
 
     public ClassType getJavaType() {
         return new ClassType(packageProvider.getPackage(), name);
+    }
+
+    public String getOwned() {
+        return owned == null ? "" : owned.toString();
+    }
+
+    public void setOwned(JavaType owner) {
+        if(owned != null) throw new RuntimeException(this.getJavaType() + " is already owned by " + getOwned() + " wanted by " + owner);
+        this.owned = new Annotation(new ClassType(Owned.class), List.of("by = " + owner + ".class"));
     }
 
     public ConfigTable getConfig() {

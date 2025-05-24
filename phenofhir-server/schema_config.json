@@ -85,6 +85,7 @@
 		"org.phenopackets.schema.v2.core.PhenotypicFeature": {
 			"name": "PhenotypicFeature",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"type": {
 					"cardinality": "required"
@@ -94,6 +95,7 @@
 		"org.phenopackets.schema.v2.core.Measurement": {
 			"name": "Measurement",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"assay": {
 					"cardinality": "required"
@@ -127,6 +129,7 @@
 		"org.phenopackets.schema.v2.core.Quantity": {
 			"name": "Quantity",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"unit": {
 					"cardinality": "required"
@@ -175,6 +178,7 @@
 		"org.phenopackets.schema.v2.core.MetaData": {
 			"name": "MetaData",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"created": {
 					"cardinality": "required"
@@ -195,6 +199,7 @@
 		"org.phenopackets.schema.v2.core.TimeElement": {
 			"name": "TimeElement",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"element": {
 					"cardinality": "required"
@@ -237,6 +242,7 @@
 		"org.phenopackets.schema.v2.core.Procedure": {
 			"name": "Procedure",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"code": {
 					"cardinality": "required"
@@ -246,6 +252,7 @@
 		"org.phenopackets.schema.v2.core.GestationalAge": {
 			"name": "GestationalAge",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"weeks": {
 					"cardinality": "required"
@@ -255,6 +262,7 @@
 		"org.phenopackets.schema.v2.core.Age": {
 			"name": "Age",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"iso8601duration": {
 					"cardinality": "required"
@@ -264,6 +272,7 @@
 		"org.phenopackets.schema.v2.core.AgeRange": {
 			"name": "AgeRange",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"start": {
 					"cardinality": "required"
@@ -276,6 +285,7 @@
 		"org.phenopackets.schema.v2.core.TimeInterval": {
 			"name": "TimeInterval",
 			"insert": true,
+			"backReference": false,
 			"fields": {
 				"start": {
 					"cardinality": "required"

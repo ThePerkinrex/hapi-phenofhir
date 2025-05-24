@@ -36,6 +36,9 @@ public class MapperRegistry {
         for(FhirMapper<?, ?> m : fhirMappers) {
             registerMapper(m);
         }
+        for(PhenoMapper<?, ?> m : phenoMappers) {
+            registerMapper(m);
+        }
     }
 
     private record CombinedMapper<A, B>(FhirMapper<A, B> fhir, PhenoMapper<A, B> pheno) implements Mapper<A, B> {

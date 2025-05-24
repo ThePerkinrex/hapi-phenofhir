@@ -17,6 +17,8 @@ public class ConfigTable {
 
     private boolean insert = false;
 
+    private boolean backReference = true;
+
     private String name;
 
     private List<String> primaryKey;
@@ -45,6 +47,14 @@ public class ConfigTable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isBackReference() {
+        return backReference;
+    }
+
+    public void setBackReference(boolean backReference) {
+        this.backReference = backReference;
     }
 
     /**
