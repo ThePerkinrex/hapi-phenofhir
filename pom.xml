@@ -30,6 +30,7 @@
     </properties>
 
     <modules>
+        <module>mapper</module>
         <module>jpa-protoc-common</module>
         <module>jpa-protoc-plugin</module>
         <module>phenofhir-server</module>
