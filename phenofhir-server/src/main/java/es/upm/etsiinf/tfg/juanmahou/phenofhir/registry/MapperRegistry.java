@@ -1,11 +1,13 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.registry;
 
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.KeyUtils;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.ReferenceMapperFactory;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.wrapper.FhirWrapperFactory;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.wrapper.PhenoWrapperFactory;
+import org.hl7.fhir.r4b.model.IdType;
 import org.hl7.fhir.r4b.model.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,15 +32,17 @@ public class MapperRegistry {
     private final Map<String, PhenoMapper<?, ?>> aliasedPhenoMappers;
     private final List<FhirWrapperFactory> fhirWrapperFactories;
     private final List<PhenoWrapperFactory> phenoWrapperFactories;
+    private final KeyUtils keyUtils;
 
     public MapperRegistry(
             List<FhirMapper<?, ?>> fhirMappers,
             List<PhenoMapper<?, ?>> phenoMappers,
             List<FhirWrapperFactory> fhirWrapperFactories,
             List<PhenoWrapperFactory> phenoWrapperFactories,
-            ReferenceMapperFactory referenceMapperFactory) {
+            ReferenceMapperFactory referenceMapperFactory, KeyUtils keyUtils) {
         this.fhirMappers = new HashMap<>(fhirMappers.size());
         this.phenoMappers = new HashMap<>(phenoMappers.size());
+        this.keyUtils = keyUtils;
         this.aliasedFhirMappers = new HashMap<>();
         this.aliasedPhenoMappers = new HashMap<>();
         this.fhirWrapperFactories = fhirWrapperFactories;
@@ -225,5 +229,10 @@ public class MapperRegistry {
             return aliasedPhenoMappers.get(name);
         }
         throw new NotFoundException("Mapping not found for name " + name);
+    }
+
+    public PhenoMapper<?, IdType> getKeyMapper(Type entity) throws NotFoundException {
+        Type key = keyUtils.getKeyType(entity);
+        return getPhenoMapper(key, IdType.class);
     }
 }

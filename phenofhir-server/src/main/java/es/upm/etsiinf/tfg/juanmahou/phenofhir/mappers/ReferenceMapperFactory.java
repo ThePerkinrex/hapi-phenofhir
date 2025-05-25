@@ -1,5 +1,7 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers;
 
+import es.upm.etsiinf.tfg.juanmahou.entities.id.Id;
+import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Mapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.MapperRegistry;
@@ -30,10 +32,11 @@ public class ReferenceMapperFactory {
         return res;
     }
 
-    private record ReferenceMapper<T>(Type pheno, ObjectProvider<Resolver> resolverProvider, ObjectProvider<MapperRegistry> mapperRegistry) implements Mapper<T, Reference> {
+    private record ReferenceMapper<K extends Id, T extends WithId<K>>(Type pheno, ObjectProvider<Resolver> resolverProvider, ObjectProvider<MapperRegistry> mapperRegistry) implements Mapper<T, Reference> {
 
         @Override
         public Reference toFHIR(T t) throws Exception {
+
             throw new RuntimeException("Not implemented");
         }
 

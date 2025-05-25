@@ -87,7 +87,7 @@ public class GeneralPhenomicResources {
                     try {
                         withMapping.initialize().initialize();
                         var m = withMapping.data();
-                        return new WithMapping<>(provider.getObject(m.getPhenoClass(), m.getFhirClass(), withMapping.mapping(), m, repositoryProvider), withMapping.initialize(), withMapping.mapping());
+                        return new WithMapping<>(provider.getObject(m.getPhenoClass(), m.getFhirClass(), withMapping.mapping(), m, repositoryProvider, registry), withMapping.initialize(), withMapping.mapping());
                     }catch (NotFoundException e) {
                         return null;
                     }
