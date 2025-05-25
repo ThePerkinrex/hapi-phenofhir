@@ -87,8 +87,10 @@ public class CodingMapper implements FhirMapper<OntologyClass, Coding>, PhenoMap
     public OntologyClass toPheno(Coding coding) throws Exception {
         Curie.System system = new Curie.System(coding.getSystem(), coding.getVersion());
         CurieMapping mapping = getMappingForSystem(system);
-        return new OntologyClass()
-                .setId(new OntologyClass.Key(mapping.getCurie() + ":" + coding.getCode()))
-                .setLabel(coding.getDisplay());
+        var oc = new OntologyClass();
+        oc.setId(new OntologyClass.Key(mapping.getCurie() + ":" + coding.getCode()));
+        oc.setLabel(coding.getDisplay());
+        return oc;
+
     }
 }

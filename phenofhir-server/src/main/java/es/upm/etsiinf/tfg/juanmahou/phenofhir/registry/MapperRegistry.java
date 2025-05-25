@@ -9,15 +9,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class MapperRegistry {
     private static final Logger log = LoggerFactory.getLogger(MapperRegistry.class);
 
-    private record Mapping(Class<?> pheno, Class<?> fhir) {}
+    private record Mapping(String pheno, String fhir) {
+    }
 
     private final Map<Mapping, FhirMapper<?, ?>> fhirMappers;
     private final Map<Mapping, PhenoMapper<?, ?>> phenoMappers;
@@ -54,12 +57,12 @@ public class MapperRegistry {
         }
 
         @Override
-        public Class<? extends B> getFhirClass() {
+        public Type getFhirClass() {
             return fhir.getFhirClass();
         }
 
         @Override
-        public Class<A> getPhenoClass() {
+        public Type getPhenoClass() {
             return fhir.getPhenoClass();
         }
     }
@@ -69,7 +72,7 @@ public class MapperRegistry {
     }
 
     public <A, B> FhirMapper<A, B> registerMapper(FhirMapper<A, B> m) {
-        log.info("Registering mapper {}", m);
+        log.info("Registering fhir mapper {} ({} -> {})", m, m.getPhenoClass(), m.getFhirClass());
         Class<?> mapperClass = m.getClass();
         for (FhirWrapperFactory factory : fhirWrapperFactories) {
             if(factory.shouldWrap(m)) {
@@ -79,7 +82,7 @@ public class MapperRegistry {
         }
         if (!mapperClass.isAnnotationPresent(MapperIgnore.class)) {
             log.info("Adding as type mapper");
-            this.fhirMappers.put(new Mapping(m.getPhenoClass(), m.getFhirClass()), m);
+            this.fhirMappers.put(new Mapping(m.getPhenoClass().getTypeName(), m.getFhirClass().getTypeName()), m);
         }
         MapperAlias alias = mapperClass.getAnnotation(MapperAlias.class);
         if(alias != null) {
@@ -90,7 +93,7 @@ public class MapperRegistry {
     }
 
     public <A, B> PhenoMapper<A, B> registerMapper(PhenoMapper<A, B> m) {
-        log.info("Registering mapper {}", m);
+        log.info("Registering pheno mapper {} ({} -> {})", m, m.getFhirClass(), m.getPhenoClass());
         Class<?> mapperClass = m.getClass();
         for (PhenoWrapperFactory factory : phenoWrapperFactories) {
             if(factory.shouldWrap(m)) {
@@ -100,7 +103,7 @@ public class MapperRegistry {
         }
         if (!mapperClass.isAnnotationPresent(MapperIgnore.class)) {
             log.info("Adding as type mapper");
-            this.phenoMappers.put(new Mapping(m.getPhenoClass(), m.getFhirClass()), m);
+            this.phenoMappers.put(new Mapping(m.getPhenoClass().getTypeName(), m.getFhirClass().getTypeName()), m);
         }
         MapperAlias alias = mapperClass.getAnnotation(MapperAlias.class);
         if(alias != null) {
@@ -110,12 +113,67 @@ public class MapperRegistry {
         return m;
     }
 
-    public <Pheno, FHIR> FhirMapper<Pheno, FHIR> getFhirMapper(Class<Pheno> pheno, Class<FHIR> fhir) throws NotFoundException {
-        Mapping mapping = new Mapping(pheno, fhir);
+    public <A, B> Mapper<A, B> unregisterMapper(Mapper<A, B> m) {
+        // Unregister both sides and return a CombinedMapper of the originals
+        return new CombinedMapper<>(
+                unregisterMapper((FhirMapper<A, B>) m),
+                unregisterMapper((PhenoMapper<A, B>) m)
+        );
+    }
+
+    public <A, B> FhirMapper<A, B> unregisterMapper(FhirMapper<A, B> m) {
+        log.info("Unregistering fhir mapper {} ({} -> {})", m, m.getPhenoClass(), m.getFhirClass());
+        Mapping key = new Mapping(m.getPhenoClass().getTypeName(), m.getFhirClass().getTypeName());
+        // remove the direct lookup
+        this.fhirMappers.remove(key);
+
+        // remove any alias
+        MapperAlias alias = m.getClass().getAnnotation(MapperAlias.class);
+        if (alias != null) {
+            log.info("Removing aliased mapper {}", alias.value());
+            this.aliasedFhirMappers.remove(alias.value());
+        }
+        return m;
+    }
+
+    public <A, B> PhenoMapper<A, B> unregisterMapper(PhenoMapper<A, B> m) {
+        log.info("Unregistering pheno mapper {} ({} -> {})", m, m.getFhirClass(), m.getPhenoClass());
+        Mapping key = new Mapping(m.getPhenoClass().getTypeName(), m.getFhirClass().getTypeName());
+        // remove the direct lookup
+        this.phenoMappers.remove(key);
+
+        // remove any alias
+        MapperAlias alias = m.getClass().getAnnotation(MapperAlias.class);
+        if (alias != null) {
+            log.info("Removing aliased mapper {}", alias.value());
+            this.aliasedPhenoMappers.remove(alias.value());
+        }
+        return m;
+    }
+
+    public <Pheno, FHIR> FhirMapper<Pheno, FHIR> getFhirMapper(Type pheno, Type fhir) throws NotFoundException {
+        Mapping mapping = new Mapping(pheno.getTypeName(), fhir.getTypeName());
         if(fhirMappers.containsKey(mapping)) {
             return (FhirMapper<Pheno, FHIR>) fhirMappers.get(mapping);
+        } else if (pheno.equals(fhir)) {
+            return new FhirMapper<>() {
+                @Override
+                public FHIR toFHIR(Pheno pheno) throws Exception {
+                    return (FHIR) pheno;
+                }
+
+                @Override
+                public Type getFhirClass() {
+                    return fhir;
+                }
+
+                @Override
+                public Type getPhenoClass() {
+                    return pheno;
+                }
+            };
         }
-        throw new NotFoundException("Mapping not found for " + pheno + " <-> " + fhir);
+        throw new NotFoundException("Mapping not found for " + pheno + " -> " + fhir);
     }
 
     public FhirMapper<?, ?> getFhirMapper(String name) throws NotFoundException {
@@ -127,12 +185,29 @@ public class MapperRegistry {
 
 
 
-    public <Pheno, FHIR> PhenoMapper<Pheno, FHIR> getPhenoMapper(Class<Pheno> pheno, Class<FHIR> fhir) throws NotFoundException {
-        Mapping mapping = new Mapping(pheno, fhir);
+    public <Pheno, FHIR> PhenoMapper<Pheno, FHIR> getPhenoMapper(Type pheno, Type fhir) throws NotFoundException {
+        Mapping mapping = new Mapping(pheno.getTypeName(), fhir.getTypeName());
         if(phenoMappers.containsKey(mapping)) {
             return (PhenoMapper<Pheno, FHIR>) phenoMappers.get(mapping);
+        } else if (pheno.equals(fhir)) {
+            return new PhenoMapper<>() {
+                @Override
+                public Pheno toPheno(FHIR fhir) throws Exception {
+                    return (Pheno) fhir;
+                }
+
+                @Override
+                public Type getFhirClass() {
+                    return fhir;
+                }
+
+                @Override
+                public Type getPhenoClass() {
+                    return pheno;
+                }
+            };
         }
-        throw new NotFoundException("Mapping not found for " + pheno + " <-> " + fhir);
+        throw new NotFoundException("Mapping not found for " + pheno + " <- " + fhir);
     }
 
     public PhenoMapper<?, ?> getPhenoMapper(String name) throws NotFoundException {

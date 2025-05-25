@@ -1,6 +1,6 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.wrapper;
 
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.types.TypeUtils;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
 import jakarta.persistence.Entity;
@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Type;
 
 @Component
 public class Persistence implements PhenoWrapperFactory {
@@ -22,12 +24,12 @@ public class Persistence implements PhenoWrapperFactory {
         }
 
         @Override
-        public Class<? extends B> getFhirClass() {
+        public Type getFhirClass() {
             return mapper.getFhirClass();
         }
 
         @Override
-        public Class<A> getPhenoClass() {
+        public Type getPhenoClass() {
             return mapper.getPhenoClass();
         }
 
@@ -55,7 +57,7 @@ public class Persistence implements PhenoWrapperFactory {
     @Override
     public <A, B> boolean shouldWrap(PhenoMapper<A, B> mapper) {
         // FIXME Maybe more classes can be persisted
-        return mapper.getPhenoClass().isAnnotationPresent(Entity.class);
+        return TypeUtils.toClass(mapper.getPhenoClass()).isAnnotationPresent(Entity.class);
     }
 
     @Override

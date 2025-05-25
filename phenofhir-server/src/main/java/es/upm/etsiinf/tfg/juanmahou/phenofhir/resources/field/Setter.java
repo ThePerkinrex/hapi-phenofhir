@@ -1,19 +1,25 @@
-package es.upm.etsiinf.tfg.juanmahou.phenofhir.resources;
+package es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.field;
+
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.types.TypeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class ResourceField<T, F> {
-    private final Function<T, F> getter;
+public class Setter<T, F> {
+    private static final Logger log = LoggerFactory.getLogger(Setter.class);
     private final BiConsumer<T, F> setter;
-    private final Class<F> fieldClass;
+    private final Type fieldClass;
 
     private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPERS = new HashMap<>();
     static {
@@ -33,33 +39,19 @@ public class ResourceField<T, F> {
      * @param name  the property/field name
      */
     @SuppressWarnings("unchecked")
-    public ResourceField(Class<? extends T> clazz, String name) {
-        Function<T, F>   tempGetter     = null;
+    public Setter(Class<? extends T> clazz, String name) {
         BiConsumer<T, F> tempSetter    = null;
-        Class<?>         rawFieldClass = null;
+        Type         rawFieldClass = null;
 
         // 1) Try bean-style accessors
         try {
             for (PropertyDescriptor pd : Introspector.getBeanInfo(clazz).getPropertyDescriptors()) {
                 if (pd.getName().equals(name)) {
-                    Method read  = pd.getReadMethod();
                     Method write = pd.getWriteMethod();
-                    if (read  != null) read .setAccessible(true);
                     if (write != null) write.setAccessible(true);
-
-                    if (read != null) {
-                        rawFieldClass = read.getReturnType();
-                        tempGetter = target -> {
-                            try {
-                                return (F) read.invoke(target);
-                            } catch (Exception e) {
-                                throw new RuntimeException("Error invoking getter for " + name, e);
-                            }
-                        };
-                    }
                     if (write != null) {
-                        Class<?> paramType = write.getParameterTypes()[0];
-                        if (rawFieldClass == null) rawFieldClass = paramType;
+                        Type paramType = write.getGenericParameterTypes()[0];
+                        rawFieldClass = paramType;
                         tempSetter = (target, value) -> {
                             try {
                                 write.invoke(target, value);
@@ -75,32 +67,41 @@ public class ResourceField<T, F> {
             // ignore
         }
 
+        if(tempSetter == null) {
+            String setterName = "set" + Character.toUpperCase(name.charAt(0)) + name.substring(1);
+            for (Method m : clazz.getMethods()) {
+                if(m.getName().equals(setterName) &&
+                        m.getGenericParameterTypes().length == 1 && (
+                                rawFieldClass == null || TypeUtils.isAssignableFrom(rawFieldClass, m.getGenericParameterTypes()[0])
+                        )) {
+                    log.info("Found {}", m);
+                    rawFieldClass = m.getGenericParameterTypes()[0];
+                    tempSetter = (obj, value) -> {
+                        try {
+                            m.invoke(obj, value);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
+                    };
+                }
+            }
+            log.info("Finally {}: {}", setterName, rawFieldClass);
+        }
+
         // 2) Fallback to direct field if needed
-        if (tempGetter == null || tempSetter == null) {
+        if (tempSetter == null) {
             try {
-                Field field = clazz.getDeclaredField(name);
+                Field field = clazz.getField(name);
                 field.setAccessible(true);
-                if (rawFieldClass == null) {
-                    rawFieldClass = field.getType();
-                }
-                if (tempGetter == null) {
-                    tempGetter = target -> {
-                        try {
-                            return (F) field.get(target);
-                        } catch (Exception e) {
-                            throw new RuntimeException("Error reading field " + name, e);
-                        }
-                    };
-                }
-                if (tempSetter == null) {
-                    tempSetter = (target, value) -> {
-                        try {
-                            field.set(target, value);
-                        } catch (Exception e) {
-                            throw new RuntimeException("Error writing field " + name, e);
-                        }
-                    };
-                }
+                rawFieldClass = field.getGenericType();
+
+                tempSetter = (target, value) -> {
+                    try {
+                        field.set(target, value);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error writing field " + name, e);
+                    }
+                };
             } catch (NoSuchFieldException e) {
                 throw new IllegalArgumentException(
                         "Neither bean property nor field '" + name + "' found on " + clazz, e);
@@ -108,8 +109,7 @@ public class ResourceField<T, F> {
         }
 
         // 3) Wrap primitive types
-        @SuppressWarnings("unchecked")
-        Class<F> finalFieldClass = (Class<F>) wrapPrimitive(rawFieldClass);
+        Type finalFieldClass = wrapPrimitive(rawFieldClass);
 
         // 4) Validate
         if (finalFieldClass == null) {
@@ -117,18 +117,12 @@ public class ResourceField<T, F> {
                     "Could not build getters/setters for '" + name + "' on " + clazz);
         }
 
-        this.getter     = tempGetter;
         this.setter     = tempSetter;
         this.fieldClass = finalFieldClass;
     }
 
-    private static Class<?> wrapPrimitive(Class<?> type) {
-        return type.isPrimitive() ? PRIMITIVE_WRAPPERS.get(type) : type;
-    }
-
-    /** Read the named property/field from the given target instance. */
-    public F get(T target) {
-        return getter.apply(target);
+    private static Type wrapPrimitive(Type type) {
+        return (type instanceof Class<?> c && c.isPrimitive()) ? PRIMITIVE_WRAPPERS.get(c) : type;
     }
 
     /** Write the named property/field on the given target instance. */
@@ -137,7 +131,15 @@ public class ResourceField<T, F> {
     }
 
     /** Returns the `Class` object representing the field’s (wrapped) type. */
-    public Class<F> getFieldClass() {
+    public Type getFieldClass() {
         return fieldClass;
+    }
+
+    @Override
+    public String toString() {
+        return "Setter{" +
+                "setter=" + setter +
+                ", fieldClass=" + fieldClass +
+                '}';
     }
 }

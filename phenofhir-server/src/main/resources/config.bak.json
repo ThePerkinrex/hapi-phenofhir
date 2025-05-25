@@ -1,8 +1,4 @@
 {
-	"ownIdentifiers": {
-		"system": "http://phenofhir.github.io",
-		"curie": "phenofhir"
-	},
 	"curie": {
 		"mapping": {
 			"uberon": [
@@ -42,26 +38,6 @@
 					"fhirName": "onset",
 					"description": "In the GA4GH phenopacket, onset is a TimeElement that represents the time or age of onset of the disease. This corresponds to onset in Condition."
 				}
-			]
-		},
-		"Patient": {
-			"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Individual",
-			"target": "entities.org.phenopackets.schema.v2.core.Individual",
-			"translations": [
-				{
-					"phenoName": "id",
-					"fhirName": "identifier"
-				},
-				{
-					"phenoName": "alternate_ids",
-					"fhirName": "identifier"
-				}
-			]
-		},
-		"Composition": {
-			"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Phenopacket",
-			"target": "entities.org.phenopackets.schema.v2.Phenopacket",
-			"translations": [
 			]
 		}
 	}

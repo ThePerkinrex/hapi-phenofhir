@@ -5,7 +5,8 @@
 	import ca.uhn.fhir.rest.server.interceptor.RequestValidatingInterceptor;
 	import ca.uhn.fhir.rest.server.interceptor.ResponseValidatingInterceptor;
     import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
-    import org.slf4j.Logger;
+	import es.upm.etsiinf.tfg.juanmahou.phenofhir.transaction.TransactionProvider;
+	import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
 	import org.springframework.boot.SpringApplication;
 	import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -40,13 +41,17 @@
 				FhirContext fhirContext,
 				RequestValidatingInterceptor requestValidatingInterceptor,
 				ResponseValidatingInterceptor responseValidatingInterceptor,
-				GeneralPhenomicResources providers
+				GeneralPhenomicResources providers,
+				TransactionProvider transactionProvider
 		) {
 			RestfulServer server = new RestfulServer(fhirContext);
 			// register your resource providers
-			server.setResourceProviders(providers.getResources().toArray(IResourceProvider[]::new));
+			server.registerProviders(providers.getResources());
+			server.registerProvider(transactionProvider);
 			server.registerInterceptor(requestValidatingInterceptor);
 			server.registerInterceptor(responseValidatingInterceptor);
+			server.setServerName("PhenoFHIR");
+			server.setServerVersion("0.1.0");
 			ServletRegistrationBean<RestfulServer> servlet =
 					new ServletRegistrationBean<>(server, "/fhir/*");
 			servlet.setName("FHIRServlet");

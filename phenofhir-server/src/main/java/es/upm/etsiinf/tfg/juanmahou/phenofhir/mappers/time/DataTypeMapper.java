@@ -32,7 +32,9 @@ public class DataTypeMapper implements FhirMapper<TimeElement, DataType>, PhenoM
     @Override
     public TimeElement toPheno(DataType dataType) throws Exception {
         if(dataType.isDateTime()) {
-            return new TimeElement().setTimestamp(baseDateTimeMapper.toPheno(dataType.dateTimeValue()));
+            TimeElement te = new TimeElement();
+            te.setTimestamp(baseDateTimeMapper.toPheno(dataType.dateTimeValue()));
+            return te;
         }
         throw new RuntimeException("Not implemented " + dataType.fhirType()); // TODO
     }

@@ -4,6 +4,8 @@ import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Type;
+
 @Component
 public class NullWrapper implements FhirWrapperFactory, PhenoWrapperFactory {
 
@@ -26,12 +28,12 @@ public class NullWrapper implements FhirWrapperFactory, PhenoWrapperFactory {
     public <A, B> FhirMapper<A, B> wrap(FhirMapper<A, B> mapper) {
         return new FhirMapper<A, B>() {
             @Override
-            public Class<? extends B> getFhirClass() {
+            public Type getFhirClass() {
                 return mapper.getFhirClass();
             }
 
             @Override
-            public Class<A> getPhenoClass() {
+            public Type getPhenoClass() {
                 return mapper.getPhenoClass();
             }
 
@@ -47,12 +49,12 @@ public class NullWrapper implements FhirWrapperFactory, PhenoWrapperFactory {
     public <A, B> PhenoMapper<A, B> wrap(PhenoMapper<A, B> mapper) {
         return new PhenoMapper<A, B>() {
             @Override
-            public Class<? extends B> getFhirClass() {
+            public Type getFhirClass() {
                 return mapper.getFhirClass();
             }
 
             @Override
-            public Class<A> getPhenoClass() {
+            public Type getPhenoClass() {
                 return mapper.getPhenoClass();
             }
 
