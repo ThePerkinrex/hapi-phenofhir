@@ -14,9 +14,24 @@ import java.util.Map;
 @RequestScope
 @Component
 public class Resolver {
-    public record Resolved(Resource resource, Object pheno) {
+    public static class Resolved {
+        private final Resource resource;
+        private Object pheno;
         public Resolved(Resource resource) {
-            this(resource, null);
+            this.resource = resource;
+            this.pheno = null;
+        }
+
+        public Resource getResource() {
+            return resource;
+        }
+
+        public Object getPheno() {
+            return pheno;
+        }
+
+        public void setPheno(Object pheno) {
+            this.pheno = pheno;
         }
     }
     private static final Logger log = LoggerFactory.getLogger(Resolver.class);

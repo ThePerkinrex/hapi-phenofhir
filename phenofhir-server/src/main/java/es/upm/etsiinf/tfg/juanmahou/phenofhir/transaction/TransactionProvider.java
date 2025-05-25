@@ -14,6 +14,7 @@ import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Mapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.generator.registry.RequestGeneratorContext;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.ReferenceMapperFactory;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.MapperRegistry;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.NotFoundException;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -47,18 +48,15 @@ public class TransactionProvider {
         throw new NotImplementedOperationException("handling of batch transactions");
     }
 
-    private <A, B> A toPheno(B resource, Class<A> target) throws Exception {
+    private <A> A toPheno(String id, Class<A> target, Resolver resolver) throws Exception {
         log.info("Translating: {}", target);
-        PhenoMapper<A, B> mapper = mapperRegistry.getPhenoMapper(target, (Class<B>) resource.getClass());
-        return mapper.toPheno(resource);
+        return ReferenceMapperFactory.get(target, resolver, mapperRegistry, id);
     }
 
     private Bundle handleTransaction(Bundle transaction) throws Exception {
         Resolver resolver = resolverObjectProvider.getObject();
         RequestGeneratorContext ctx = requestGeneratorContextObjectProvider.getObject();
         for(var entry : transaction.getEntry()) {
-//            log.info("Entry {}", entry.getFullUrl());
-//            log.info("{} {}", entry.getRequest().getMethod(), entry.getRequest().getUrl());
             Resource resource = entry.getResource();
             resolver.register(entry.getFullUrl(), resource);
             if (entry.getRequest().getMethod() != Bundle.HTTPVerb.POST) {
@@ -84,13 +82,24 @@ public class TransactionProvider {
             }
             ctx.setCurrentResource(resource);
             if(!target.isAnnotationPresent(Owned.class)) {
-                Object pheno = toPheno(resource, target);
+                Object pheno = toPheno(entry.getFullUrl(), target, resolver);
                 log.info("Converted: {}", pheno);
             }
             ctx.setCurrentResource(null);
-
         }
-        throw new NotImplementedOperationException("Not implemented");
+        Bundle responseBundle = new Bundle();
+        responseBundle.setType(Bundle.BundleType.TRANSACTIONRESPONSE);
+        for(var entry : transaction.getEntry()) {
+            Resolver.Resolved resolved = resolver.get(entry.getFullUrl());
+            Bundle.BundleEntryComponent responseEntry = responseBundle.addEntry();
+            if(resolved.getPheno() instanceof WithId<?> id) {
+                responseEntry.getResponse().setStatus("200");
+                responseEntry.getResponse().setLocation(entry.getRequest().getUrl() + "/" + id.getId());
+            }else{
+                responseEntry.getResponse().setStatus("400");
+            }
+        }
+        return responseBundle;
     }
 
     @Transaction

@@ -62,6 +62,23 @@
 			"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Phenopacket",
 			"target": "entities.org.phenopackets.schema.v2.Phenopacket",
 			"translations": [
+				{
+					"phenoName": "id",
+					"fhirName": "identifier"
+				},
+				{
+					"phenoName": "subject",
+					"fhirName": "subject"
+				}
+			],
+			"phenoFields": [
+				{
+					"name": "meta_data",
+					"generator": {
+						"name": "MetaData",
+						"params": {}
+					}
+				}
 			]
 		}
 	}

@@ -3,8 +3,10 @@ package es.upm.etsiinf.tfg.juanmahou.phenofhir.registry;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.ReferenceMapperFactory;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.wrapper.FhirWrapperFactory;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.wrapper.PhenoWrapperFactory;
+import org.hl7.fhir.r4b.model.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -29,7 +31,12 @@ public class MapperRegistry {
     private final List<FhirWrapperFactory> fhirWrapperFactories;
     private final List<PhenoWrapperFactory> phenoWrapperFactories;
 
-    public MapperRegistry(List<FhirMapper<?, ?>> fhirMappers, List<PhenoMapper<?, ?>> phenoMappers, List<FhirWrapperFactory> fhirWrapperFactories, List<PhenoWrapperFactory> phenoWrapperFactories) {
+    public MapperRegistry(
+            List<FhirMapper<?, ?>> fhirMappers,
+            List<PhenoMapper<?, ?>> phenoMappers,
+            List<FhirWrapperFactory> fhirWrapperFactories,
+            List<PhenoWrapperFactory> phenoWrapperFactories,
+            ReferenceMapperFactory referenceMapperFactory) {
         this.fhirMappers = new HashMap<>(fhirMappers.size());
         this.phenoMappers = new HashMap<>(phenoMappers.size());
         this.aliasedFhirMappers = new HashMap<>();
@@ -40,6 +47,9 @@ public class MapperRegistry {
             registerMapper(m);
         }
         for(PhenoMapper<?, ?> m : phenoMappers) {
+            registerMapper(m);
+        }
+        for(Mapper<?, Reference> m : referenceMapperFactory.getAll()) {
             registerMapper(m);
         }
     }

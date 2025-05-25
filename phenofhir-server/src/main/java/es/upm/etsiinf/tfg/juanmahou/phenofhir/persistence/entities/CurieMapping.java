@@ -1,4 +1,4 @@
-package es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence;
+package es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.entities;
 
 import jakarta.persistence.*;
 

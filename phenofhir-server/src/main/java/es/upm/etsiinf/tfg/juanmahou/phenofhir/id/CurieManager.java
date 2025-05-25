@@ -1,7 +1,7 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.id;
 
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.CurieMapping;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.entities.CurieMapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.CurieMappingRepository;
 import org.springframework.stereotype.Component;
 

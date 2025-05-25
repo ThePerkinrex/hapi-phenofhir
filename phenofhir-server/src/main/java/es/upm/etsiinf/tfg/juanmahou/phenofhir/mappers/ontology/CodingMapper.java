@@ -5,7 +5,7 @@ import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Curie;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.CurieMapping;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.entities.CurieMapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.CurieMappingRepository;
 import org.hl7.fhir.r4b.model.Coding;
 import org.springframework.stereotype.Component;

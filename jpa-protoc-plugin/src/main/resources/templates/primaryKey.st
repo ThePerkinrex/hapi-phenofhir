@@ -25,7 +25,11 @@ public static class Key implements <id_iface> {
 
     @Override
     public String toString() {
-        return "Key {" + <pk.fields:{f | "<f.name>=" + this.<f.name> + ", "}; separator=" + "> + "}";
+        <if(first(pk.fields) && !rest(pk.fields))> <! only has one element !>
+            return String.valueOf(this.<first(pk.fields).name>);
+        <else>
+            return "Key {" + <pk.fields:{f | "<f.name>=" + this.<f.name> + ", "}; separator=" + "> + "}";
+        <endif>
     }
 }
 >>
