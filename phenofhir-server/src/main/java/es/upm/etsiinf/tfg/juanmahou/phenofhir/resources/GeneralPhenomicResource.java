@@ -1,67 +1,58 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.resources;
 
-import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Read;
-import ca.uhn.fhir.rest.annotation.ResourceParam;
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import es.upm.etsiinf.tfg.juanmahou.entities.id.Id;
 import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Mapping;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.FhirMapper;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.Mapper;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers.PhenoMapper;
+import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
+import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRunner;
+import es.upm.etsiinf.tfg.juanmahou.mapper.config.Mapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.MapperRegistry;
-import es.upm.etsiinf.tfg.juanmahou.phenofhir.registry.NotFoundException;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4b.model.CodeableConcept;
 import org.hl7.fhir.r4b.model.IdType;
-import org.hl7.fhir.r4b.model.OperationOutcome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.ResolvableType;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.OperationNotSupportedException;
-import java.lang.reflect.Type;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<PhenoKey>, FHIR extends IBaseResource> implements IResourceProvider {
+public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<PhenoKey>> implements IResourceProvider {
     private static final Logger log = LoggerFactory.getLogger(GeneralPhenomicResource.class);
-    private final Class<FHIR> resource;
-    private final Type target;
+    private final Class<? extends IBaseResource> resource;
+    private final ResolvableType target;
     private final Mapping mapping;
-    private final FhirMapper<Pheno, FHIR> resourceMapping;
-    private final PhenoMapper<PhenoKey, IdType> idMapper;
+    private final MapperRunner resourceMapping;
+//    private final PhenoMapper<PhenoKey, IdType> idMapper;
     private final CrudRepository<Pheno, PhenoKey> repository;
 
 
     public GeneralPhenomicResource(
-            Type target,
-            Class<FHIR> resource,
+            ResolvableType target,
+            ResolvableType resource,
             Mapping mapping,
-            FhirMapper<Pheno,FHIR> mapper,
+            MapperRunner mapper,
             RepositoryProvider repositoryProvider,
             MapperRegistry registry
-    ) throws NotFoundException {
-        this.resource = resource;
+    ) {
+        if(!ResolvableType.forClass(IBaseResource.class).isAssignableFrom(resource)) throw new RuntimeException("Cant create resource provider for " + resource);
+        this.resource = (Class<? extends IBaseResource>) resource.resolve();
         this.mapping = mapping;
         this.target = target;
         this.resourceMapping = mapper;
-        this.idMapper = (PhenoMapper<PhenoKey, IdType>) registry.getKeyMapper(target);
+//        this.idMapper = (PhenoMapper<PhenoKey, IdType>) registry.getKeyMapper(target);
         this.repository = repositoryProvider.getCrudRepository(target);
     }
 
     @Override
-    public Class<FHIR> getResourceType() {
+    public Class<? extends IBaseResource> getResourceType() {
         return resource;
     }
 
@@ -88,12 +79,12 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
 //    }
 
     @Read
-    public FHIR read(@IdParam IdType idType) throws Exception {
-        PhenoKey key = this.idMapper.toPheno(idType);
-        Pheno pheno = repository.findById(key).orElseThrow(() -> {
-            log.error("{} with id {} not found", target, key);
-            return new ResourceNotFoundException(idType);
-        });
+    public Object read(@IdParam IdType idType) throws Exception {
+//        PhenoKey key = this.idMapper.toPheno(idType);
+//        Pheno pheno = repository.findById(key).orElseThrow(() -> {
+//            log.error("{} with id {} not found", target, key);
+//            return new ResourceNotFoundException(idType);
+//        });
 
 //        PhenoKey id;
 //        try {
@@ -108,11 +99,11 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
 //            log.error("{} with id {} not found", target, id);
 //            return new ResourceNotFoundException(idType);
 //        });
-        log.info("Loaded {}", pheno.getId());
-        FHIR fhir = resourceMapping.toFHIR(pheno);
-        log.info("Converted: {}", fhir);
-
-        return fhir;
-//        throw new OperationNotSupportedException("Not implemented");
+//        log.info("Loaded {}", pheno.getId());
+//        FHIR fhir = resourceMapping.toFHIR(pheno);
+//        log.info("Converted: {}", fhir);
+//
+//        return fhir;
+        throw new OperationNotSupportedException("Not implemented");
     }
 }

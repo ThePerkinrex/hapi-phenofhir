@@ -4,7 +4,8 @@
 	import ca.uhn.fhir.rest.server.RestfulServer;
 	import ca.uhn.fhir.rest.server.interceptor.RequestValidatingInterceptor;
 	import ca.uhn.fhir.rest.server.interceptor.ResponseValidatingInterceptor;
-    import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
+	import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
+	import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
 	import es.upm.etsiinf.tfg.juanmahou.phenofhir.transaction.TransactionProvider;
 	import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
@@ -16,7 +17,7 @@
 	import ca.uhn.fhir.context.FhirContext;
 	import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-    @SpringBootApplication
+    @SpringBootApplication(scanBasePackages = "es.upm.etsiinf.tfg.juanmahou")
 	@EntityScan({
 			"es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence",
 			"entities.org.ga4gh.vrsatile.v1",
@@ -42,7 +43,8 @@
 				RequestValidatingInterceptor requestValidatingInterceptor,
 				ResponseValidatingInterceptor responseValidatingInterceptor,
 				GeneralPhenomicResources providers,
-				TransactionProvider transactionProvider
+				TransactionProvider transactionProvider,
+				MapperRegistry mapperRegistry
 		) {
 			RestfulServer server = new RestfulServer(fhirContext);
 			// register your resource providers

@@ -21,65 +21,23 @@
 			]
 		}
 	},
-	"mappings": {
-		"Condition": {
-			"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Disease",
-			"target": "entities.org.phenopackets.schema.v2.core.Disease",
-			"translations": [
-				{
-					"phenoName": "term",
-					"fhirName": "code",
-					"description": "In the GA4GH phenopacket, the term element is an OntologyClass that represents the disease diagnosis. This corresponds to the code element of Condition."
-				},
-				{
-					"phenoName": "excluded",
-					"fhirName": "clinicalStatus",
-					"mapper": "DiseaseExcluded",
-					"description": "In the GA4GH phenopacket, excluded is a boolean that is false by default. If set true, the meaning is that the disease indicated by the term element was explicitly excluded by clinical examination. The clinicalStatus element of Condition uses a Preferred value set for the codes (active, relapse, remission, resolved) but it is valid to use other codes here. To represent the fact that a disease has been excluded, the SNOMED code 315215002, Disorder excluded (situation), or a comparable code should be used."
-				},
-				{
-					"phenoName": "onset",
-					"fhirName": "onset",
-					"description": "In the GA4GH phenopacket, onset is a TimeElement that represents the time or age of onset of the disease. This corresponds to onset in Condition."
-				}
-			]
-		},
-		"Patient": {
-			"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Individual",
+	"mappings": [
+		{
+			"source": "Patient",
 			"target": "entities.org.phenopackets.schema.v2.core.Individual",
-			"translations": [
+			"sourceConditions": [
 				{
-					"phenoName": "id",
-					"fhirName": "identifier"
-				},
-				{
-					"phenoName": "alternate_ids",
-					"fhirName": "identifier"
-				}
-			]
-		},
-		"Composition": {
-			"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Phenopacket",
-			"target": "entities.org.phenopackets.schema.v2.Phenopacket",
-			"translations": [
-				{
-					"phenoName": "id",
-					"fhirName": "identifier"
-				},
-				{
-					"phenoName": "subject",
-					"fhirName": "subject"
+					"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Individual"
 				}
 			],
-			"phenoFields": [
-				{
-					"name": "meta_data",
-					"generator": {
-						"name": "MetaData",
-						"params": {}
-					}
+			"fields": {
+				"id": {
+					"sources": ["identifier"]
+				},
+				"alternate_ids": {
+					"sources": ["identifier"]
 				}
-			]
+			}
 		}
-	}
+	]
 }

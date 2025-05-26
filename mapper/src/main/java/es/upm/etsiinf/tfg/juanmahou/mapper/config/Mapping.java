@@ -20,7 +20,7 @@ public class Mapping {
     @Valid
     private Map<String, Field> fields = Map.of();
 
-    public Map<String, ?> getFields() {
+    public Map<String, Field> getFields() {
         return fields;
     }
 

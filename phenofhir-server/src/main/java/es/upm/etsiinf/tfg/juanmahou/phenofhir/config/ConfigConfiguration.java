@@ -1,6 +1,8 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
+import es.upm.etsiinf.tfg.juanmahou.mapper.config.Mapping;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
@@ -19,7 +21,7 @@ public class ConfigConfiguration {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Bean
-    public Config config(Validator validator, ConfigFile configFile) throws IOException {
+    public Config config(Validator validator, ConfigFile configFile, MapperRegistry mapperRegistry) throws IOException, NoSuchMethodException {
         try (InputStream stream = configFile.loadConfig()) {
             Config c = objectMapper.readValue(stream, Config.class);
             var errors = validator.validate(c);
@@ -29,6 +31,9 @@ public class ConfigConfiguration {
 
                 }
                 throw new ConstraintViolationException("Error validating config", errors);
+            }
+            for(Mapping m : c.getMappings()) {
+                mapperRegistry.registerMapping(m);
             }
             return c;
         }

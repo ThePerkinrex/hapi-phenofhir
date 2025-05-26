@@ -8,4 +8,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(ProfileCondition.class)
 })
 public abstract class SourceCondition {
+    public abstract Exception getException(Object o);
+    public abstract boolean check(Object o);
 }

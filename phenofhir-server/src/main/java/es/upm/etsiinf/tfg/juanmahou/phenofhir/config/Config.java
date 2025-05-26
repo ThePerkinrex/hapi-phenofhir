@@ -1,16 +1,18 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import es.upm.etsiinf.tfg.juanmahou.mapper.config.Mapping;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 public class Config {
     @Valid
     private Curie curie = new Curie();
     @Valid
-    private Map<String, Mapping> mappings = Map.of();
+    private List<Mapping> mappings = List.of();
 
     public OwnIdentifiers getOwnIdentifiers() {
         return ownIdentifiers;
@@ -23,11 +25,11 @@ public class Config {
     @NotNull
     private OwnIdentifiers ownIdentifiers;
 
-    public Map<String, Mapping> getMappings() {
+    public List<Mapping> getMappings() {
         return mappings;
     }
 
-    public void setMappings(Map<String, Mapping> mappings) {
+    public void setMappings(List<Mapping> mappings) {
         this.mappings = mappings;
     }
 

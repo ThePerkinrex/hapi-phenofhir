@@ -11,6 +11,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class Setter<T, F> {
@@ -20,13 +21,14 @@ public class Setter<T, F> {
 
 
     /**
-     * @param clazz the class containing the field or JavaBean property
+     * @param type the class containing the field or JavaBean property
      * @param name  the property/field name
      */
     @SuppressWarnings("unchecked")
-    public Setter(Class<? extends T> clazz, String name) {
+    public Setter(ResolvableType type, String name) {
         BiConsumer<T, F> tempSetter    = null;
         ResolvableType   rawFieldClass = null;
+        Class<?> clazz = Objects.requireNonNull(type.resolve());
 
         // 1) Try bean-style accessors
         try {
@@ -93,7 +95,7 @@ public class Setter<T, F> {
         }
 
         // 3) Wrap primitive types
-        ResolvableType finalFieldClass = PrimitiveUtil. wrapPrimitive(rawFieldClass);
+        ResolvableType finalFieldClass = PrimitiveUtil.wrapPrimitive(rawFieldClass);
 
 
         this.setter     = tempSetter;

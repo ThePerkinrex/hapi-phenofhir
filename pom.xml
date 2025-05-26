@@ -30,9 +30,9 @@
     </properties>
 
     <modules>
-        <module>mapper</module>
         <module>jpa-protoc-common</module>
         <module>jpa-protoc-plugin</module>
+        <module>mapper</module>
         <module>phenofhir-server</module>
     </modules>
 
@@ -44,6 +44,12 @@
                 <version>${spring.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.classgraph</groupId>
+                <artifactId>classgraph</artifactId>
+                <version>4.8.179</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

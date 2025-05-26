@@ -10,6 +10,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class Getter<T, F> {
@@ -18,13 +19,14 @@ public class Getter<T, F> {
     private final ResolvableType fieldClass;
 
     /**
-     * @param clazz the class containing the field or JavaBean property
+     * @param type the class containing the field or JavaBean property
      * @param name  the property/field name
      */
     @SuppressWarnings("unchecked")
-    public Getter(Class<? extends T> clazz, String name) {
+    public Getter(ResolvableType type, String name) {
         Function<T, F>   tempGetter     = null;
         ResolvableType    rawFieldClass = null;
+        Class<?> clazz = Objects.requireNonNull(type.resolve());
 
         // 1) Try bean-style accessors
         try {
