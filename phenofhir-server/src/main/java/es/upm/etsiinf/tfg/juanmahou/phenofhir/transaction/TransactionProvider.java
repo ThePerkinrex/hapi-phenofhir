@@ -11,6 +11,7 @@ import es.upm.etsiinf.tfg.juanmahou.entities.Owned;
 import es.upm.etsiinf.tfg.juanmahou.entities.id.Id;
 import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
+import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRunner;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4b.model.Bundle;
@@ -20,8 +21,11 @@ import org.hl7.fhir.r4b.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Component
 public class TransactionProvider {
@@ -41,28 +45,51 @@ public class TransactionProvider {
         throw new NotImplementedOperationException("handling of batch transactions");
     }
 
-    private <A> A toPheno(String id, Class<A> target, Resolver resolver) throws Exception {
-        log.info("Translating: {}", target);
-//        return ReferenceMapperFactory.get(target, resolver, mapperRegistry, id);
-        throw new RuntimeException("Unimplemented");
+    private Bundle.BundleEntryComponent processEntry(String path, Resolver.Resolved resolved) {
+        Bundle.BundleEntryComponent response = new Bundle.BundleEntryComponent();
+        List<MapperRegistry.MapperAndData> mappers = mapperRegistry
+                .getAllForArgs(List.of(ResolvableType.forInstance(resolved.getResource())))
+                .filter(m -> !m.key().ret().as(WithId.class).equalsType(ResolvableType.NONE))
+                .toList();
+        if(mappers.isEmpty()) {
+            log.warn("No mapper found for {}", resolved);
+            response.getResponse().setStatus("404");
+            return response;
+        } else if (mappers.size() > 1) {
+            log.warn("Too many mappers found for {}", resolved);
+            response.getResponse().setStatus("500");
+            return response;
+        }
+        MapperRunner mapper = mappers.getFirst().runner();
+        WithId<?> result;
+        try {
+            result = (WithId<?>) mapper.run(List.of(resolved.getResource()));
+        } catch (Exception e) {
+            log.error("Error handling {}", resolved, e);
+            response.getResponse().setStatus("500");
+            return response;
+        }
+
+        resolved.setPheno(result);
+
+        response.getResponse().setStatus("201");
+        response.getResponse().setLocation(path + "/" + result.getId().toString());
+
+        return response;
     }
 
     private Bundle handleTransaction(Bundle transaction) throws Exception {
-//        Resolver resolver = resolverObjectProvider.getObject();
-//        for(var entry : transaction.getEntry()) {
-//            Resource resource = entry.getResource();
-//            resolver.register(entry.getFullUrl(), resource);
-//            if (entry.getRequest().getMethod() != Bundle.HTTPVerb.POST) {
-//                throw new NotImplementedOperationException(entry.getRequest().getMethod().toString());
-//            }
-//            Mapping mapping = config.getMappings().get(resource.getResourceType().toString());
-//            if(mapping == null) continue;
-//            if (mapping.getProfile() != null && resource.getMeta().getProfile().stream().noneMatch(p -> p.getValueAsString().equals(mapping.getProfile()))) {
-//                var oo = new OperationOutcome();
-//                oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR).setCode(OperationOutcome.IssueType.STRUCTURE).setDetails(new CodeableConcept().setText("Resource didn't include the correct profile"));
-//                throw new UnprocessableEntityException("Profile does not match", oo);
-//            }
-//        }
+        Resolver resolver = resolverObjectProvider.getObject();
+        Bundle responseBundle = new Bundle();
+        responseBundle.setType(Bundle.BundleType.TRANSACTIONRESPONSE);
+        for(var entry : transaction.getEntry()) {
+            Resource resource = entry.getResource();
+            Resolver.Resolved resolved = resolver.register(entry.getFullUrl(), resource);
+            if (entry.getRequest().getMethod() != Bundle.HTTPVerb.POST) {
+                throw new NotImplementedOperationException(entry.getRequest().getMethod().toString());
+            }
+            responseBundle.addEntry(processEntry(entry.getRequest().getUrl(), resolved));
+        }
 //        for(var entry : transaction.getEntry()) {
 //            Resource resource = entry.getResource();
 //            Mapping mapping = config.getMappings().get(resource.getResourceType().toString());
@@ -92,8 +119,8 @@ public class TransactionProvider {
 //                responseEntry.getResponse().setStatus("400");
 //            }
 //        }
-//        return responseBundle;
-        throw new RuntimeException("Unimplemented");
+        return responseBundle;
+//        throw new RuntimeException("Unimplemented");
     }
 
     @Transaction

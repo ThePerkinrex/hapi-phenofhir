@@ -12,6 +12,8 @@ public class Field {
     @NotEmpty
     private String mapper = "default";
 
+    private boolean id = false;
+
     public List<String> getSources() {
         return sources;
     }
@@ -26,5 +28,22 @@ public class Field {
 
     public void setMapper(String mapper) {
         this.mapper = mapper;
+    }
+
+    public boolean isId() {
+        return id;
+    }
+
+    public void setId(boolean id) {
+        this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "Field{" +
+                "sources=" + sources +
+                ", mapper='" + mapper + '\'' +
+                ", isId=" + id +
+                '}';
     }
 }

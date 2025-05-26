@@ -14,6 +14,17 @@ public class Mapping {
     @NotEmpty
     private String target;
 
+    @NotEmpty
+    private String name = "default";
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Valid
     private List<SourceCondition> sourceConditions = List.of();
 

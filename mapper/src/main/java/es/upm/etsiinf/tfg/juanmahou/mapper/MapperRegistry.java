@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Component
 public class MapperRegistry {
@@ -31,12 +32,16 @@ public class MapperRegistry {
     private static final ResolvableType CONTEXT = ResolvableType.forClass(Context.class);
 
     public record MapperKey(ResolvableType ret, List<ResolvableType> params) {
+        public boolean paramsEquals(List<ResolvableType> other) {
+            return params().size() == other.size() && IntStream.iterate(0
+                    , i -> 1 + i).limit(params().size()).allMatch(i -> params.get(i).equalsType(other.get(i)));
+        }
+
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
             MapperKey mapperKey = (MapperKey) o;
-            return ret.equalsType(mapperKey.ret) && params().size() == mapperKey.params.size() && IntStream.iterate(0
-                    , i -> 1 + i).limit(params().size()).allMatch(i -> params.get(i).equalsType(mapperKey.params.get(i)));
+            return ret.equalsType(mapperKey.ret) && paramsEquals(mapperKey.params());
         }
 
         @Override
@@ -70,6 +75,7 @@ public class MapperRegistry {
         }
         log.info("Registering mapper {} ({}) - {}", key, key.hashCode(), name);
         named.put(name, (ctx, params) -> {
+            log.info("Running mapper {} - {} with params {} ({})", key, name, params, ResolvableType.forInstance(params));
             Object res = runner.run(ctx, params);
             ResolvableType original = ResolvableType.forInstance(res);
             for(var adapter : resultAdapters) {
@@ -116,8 +122,8 @@ public class MapperRegistry {
                             Object p = params.get(i);
                             var t = ResolvableType.forInstance(p);
                             var u = mapperParams.get(i);
-                            if (!t.equals(u)) {
-                                throw new IllegalArgumentException(t + " doesn't match " + u);
+                            if (!u.isAssignableFrom(t) && !u.toClass().isAssignableFrom(t.toClass())) {
+                                throw new IllegalArgumentException(t + " is not assignable to " + u);
                             }
                             nextParams[i + 1] = p;
                         }
@@ -141,7 +147,7 @@ public class MapperRegistry {
     }
 
     public void registerMapping(Mapping mapping) throws NoSuchMethodException {
-        final String NAME = "default";
+        final String NAME = mapping.getName();
         ResolvableType source = typeRegistry.resolve(mapping.getSource());
         ResolvableType target = typeRegistry.resolve(mapping.getTarget());
         Constructor<?> targetConstructor = Objects.requireNonNull(target.resolve()).getConstructor();
@@ -172,7 +178,11 @@ public class MapperRegistry {
                         f.field.getSources().stream().map(s -> baseDataResolver.resolve(next, s)).toList();
                 MapperRunner fieldMapper = getMapper(f.setter.getFieldClass(),
                         dataGetters.stream().map(DataGetter::getType).toList(), f.field.getMapper());
+                if(fieldMapper == null) throw new NullPointerException("Cant map fields " + f + " types " + dataGetters.stream().map(DataGetter::getType).toList());
                 Object result = fieldMapper.run(next, dataGetters.stream().map(DataGetter::get).toList());
+                if(f.field.isId()) {
+                    next.setId(result);
+                }
                 f.setter.set(res, result);
             }
             return res;
@@ -204,5 +214,20 @@ public class MapperRegistry {
             });
         }
         return res;
+    }
+
+    public record MapperAndData(MapperRunner runner, MapperKey key, String name) {}
+
+    public Stream<MapperAndData> getAllForArgs(List<ResolvableType> args) {
+        return mappers
+                .entrySet()
+                .stream()
+                .filter(e -> e.getKey().paramsEquals(args))
+                .flatMap(e -> e
+                        .getValue()
+                        .entrySet()
+                        .stream()
+                        .map(x -> new MapperAndData(x.getValue(), e.getKey(), x.getKey())))
+                ;
     }
 }

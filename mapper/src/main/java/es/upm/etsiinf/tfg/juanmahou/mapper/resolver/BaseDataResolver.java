@@ -3,18 +3,16 @@ package es.upm.etsiinf.tfg.juanmahou.mapper.resolver;
 import es.upm.etsiinf.tfg.juanmahou.mapper.context.Context;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 public class BaseDataResolver { // This one doesn't implement a prefix
-    private final Map<String, Resolver> resolvers;
+    private final Map<String, Resolver<BaseDataResolver>> resolvers;
 
-    public BaseDataResolver(List<Resolver> resolvers) {
+    public BaseDataResolver(List<Resolver<BaseDataResolver>> resolvers) {
         this.resolvers = resolvers.stream().collect(Collectors.toMap(Resolver::prefix, r -> r));
-
     }
 
     public DataGetter resolve(Context ctx, String dataPath) {
@@ -27,7 +25,7 @@ public class BaseDataResolver { // This one doesn't implement a prefix
             prefix = "this";
             path = dataPath;
         }
-        Resolver r = resolvers.get(prefix);
+        Resolver<BaseDataResolver> r = resolvers.get(prefix);
         if(r == null) throw new RuntimeException("Resolver for prefix " + prefix + " not found");
         return r.resolve(ctx, path);
     }

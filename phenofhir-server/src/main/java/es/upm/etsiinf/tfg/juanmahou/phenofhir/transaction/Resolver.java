@@ -8,8 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @RequestScope
 @Component
@@ -17,6 +20,9 @@ public class Resolver {
     public static class Resolved {
         private final Resource resource;
         private Object pheno;
+
+        private List<Consumer<Object>> onBuild = new ArrayList<>();
+
         public Resolved(Resource resource) {
             this.resource = resource;
             this.pheno = null;
@@ -32,6 +38,27 @@ public class Resolver {
 
         public void setPheno(Object pheno) {
             this.pheno = pheno;
+            for(var r : onBuild) {
+                r.accept(pheno);
+            }
+            this.onBuild.clear();
+        }
+
+        public void onBuild(Consumer<Object> consumer) {
+            if(this.pheno == null) {
+                this.onBuild.add(consumer);
+            }else{
+                consumer.accept(this.pheno);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Resolved{" +
+                    "resource=" + resource +
+                    ", pheno=" + pheno +
+                    ", onBuild=" + onBuild +
+                    '}';
         }
     }
     private static final Logger log = LoggerFactory.getLogger(Resolver.class);
@@ -46,12 +73,13 @@ public class Resolver {
 
     }
 
-    public void register(String id, Resolved res) {
+    public Resolved register(String id, Resolved res) {
         resources.put(id, res);
+        return res;
     }
 
-    public void register(String id, Resource res) {
-        register(id, new Resolved(res));
+    public Resolved register(String id, Resource res) {
+        return register(id, new Resolved(res));
     }
 
     public Resolved get(String id) {

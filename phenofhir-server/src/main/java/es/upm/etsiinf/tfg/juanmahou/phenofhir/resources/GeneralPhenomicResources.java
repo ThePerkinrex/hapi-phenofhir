@@ -5,20 +5,19 @@ import es.upm.etsiinf.tfg.juanmahou.entities.id.Id;
 import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRunner;
+import es.upm.etsiinf.tfg.juanmahou.mapper.TypeRegistry;
 import es.upm.etsiinf.tfg.juanmahou.mapper.config.Mapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.KeyUtils;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,17 +26,43 @@ public class GeneralPhenomicResources {
 
     private record WithMapping<T>(T data, Mapping mapping) {}
 
-    private final Map<Type, IResourceProvider> resources;
+    private final Map<ResolvableType, IResourceProvider> resources;
 
     public GeneralPhenomicResources(
             Config config,
             MapperRegistry registry,
             ObjectProvider<GeneralPhenomicResource<? extends Id, ? extends WithId<?>>> provider,
-            RepositoryProvider repositoryProvider
+            RepositoryProvider repositoryProvider,
+            KeyUtils keyUtils,
+            TypeRegistry typeRegistry
     ) throws ClassNotFoundException, NoSuchMethodException {
         log.info("Getting mappings {}", config);
         List<WithMapping<MapperRunner>> resources = new ArrayList<>(config.getMappings().size());
-        this.resources = Map.of();
+        this.resources = new HashMap<>();
+
+        for (Mapping m : config.getMappings()) {
+            ResolvableType source = typeRegistry.resolve(m.getSource());
+            ResolvableType target = typeRegistry.resolve(m.getTarget());
+
+            if(!ResolvableType.forClass(IBaseResource.class).isAssignableFrom(target)) {
+                log.warn("{} is not a resource, skipping", target);
+                continue;
+            }
+
+            MapperRunner runner = registry.getMapper(target, List.of(source), m.getName());
+            if(runner == null) throw new RuntimeException("Runner is unexpectedly null");
+
+            GeneralPhenomicResource<? extends Id, ? extends WithId<?>> gpr = provider.getObject(
+                    source,
+                    target,
+                    m,
+                    runner,
+                    repositoryProvider,
+                    registry,
+                    keyUtils
+            );
+            this.resources.put(target, gpr);
+        }
 
 //        for (var e : config.getMappings().entrySet()) {
 //            String name = e.getKey();
@@ -93,7 +118,7 @@ public class GeneralPhenomicResources {
         return resources.values().stream().toList();
     }
 
-    public IResourceProvider get(Type c) {
+    public IResourceProvider get(ResolvableType c) {
         return resources.get(c);
     }
 }

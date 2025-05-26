@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class ThisResolver implements Resolver {
+public class ThisResolver implements Resolver<BaseDataResolver> {
     @Override
     public String prefix() {
         return "this";

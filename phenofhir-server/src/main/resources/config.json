@@ -32,10 +32,22 @@
 			],
 			"fields": {
 				"id": {
-					"sources": ["identifier"]
+					"sources": ["identifier"],
+					"id": true
 				},
 				"alternate_ids": {
 					"sources": ["identifier"]
+				}
+			}
+		},
+		{
+			"source": "entities.org.phenopackets.schema.v2.core.Individual",
+			"target": "Patient",
+			"fields": {
+				"identifier": {
+					"sources": ["alternate_ids", "id"],
+					"id": true,
+					"mapper": "PatientIds"
 				}
 			}
 		}

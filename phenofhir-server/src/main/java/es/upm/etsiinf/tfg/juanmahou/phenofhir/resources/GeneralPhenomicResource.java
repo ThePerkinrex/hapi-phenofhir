@@ -9,6 +9,7 @@ import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRunner;
 import es.upm.etsiinf.tfg.juanmahou.mapper.config.Mapping;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.KeyUtils;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4b.model.IdType;
@@ -19,8 +20,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.OperationNotSupportedException;
+import java.util.List;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -30,7 +33,7 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
     private final ResolvableType target;
     private final Mapping mapping;
     private final MapperRunner resourceMapping;
-//    private final PhenoMapper<PhenoKey, IdType> idMapper;
+    private final MapperRunner idMapper;
     private final CrudRepository<Pheno, PhenoKey> repository;
 
 
@@ -40,14 +43,16 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
             Mapping mapping,
             MapperRunner mapper,
             RepositoryProvider repositoryProvider,
-            MapperRegistry registry
+            MapperRegistry registry,
+            KeyUtils keyUtils
     ) {
         if(!ResolvableType.forClass(IBaseResource.class).isAssignableFrom(resource)) throw new RuntimeException("Cant create resource provider for " + resource);
-        this.resource = (Class<? extends IBaseResource>) resource.resolve();
+        this.resource = (Class<? extends IBaseResource>) resource.toClass();
         this.mapping = mapping;
         this.target = target;
         this.resourceMapping = mapper;
-//        this.idMapper = (PhenoMapper<PhenoKey, IdType>) registry.getKeyMapper(target);
+        this.idMapper = registry.getMapper(keyUtils.getKeyType(target), List.of(ResolvableType.forClass(IdType.class)));
+        if(this.idMapper == null) throw new RuntimeException("No id mapper found for " + keyUtils.getKeyType(target));
         this.repository = repositoryProvider.getCrudRepository(target);
     }
 
@@ -79,12 +84,16 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
 //    }
 
     @Read
-    public Object read(@IdParam IdType idType) throws Exception {
-//        PhenoKey key = this.idMapper.toPheno(idType);
-//        Pheno pheno = repository.findById(key).orElseThrow(() -> {
-//            log.error("{} with id {} not found", target, key);
-//            return new ResourceNotFoundException(idType);
-//        });
+    @Transactional(readOnly = true)
+    public IBaseResource read(@IdParam IdType idType) throws Exception {
+        PhenoKey key = (PhenoKey) this.idMapper.run(List.of(idType));
+
+        Pheno pheno = repository.findById(key).orElseThrow(() -> {
+            log.error("{} with id {} not found", target, key);
+            return new ResourceNotFoundException(idType);
+        });
+
+
 
 //        PhenoKey id;
 //        try {
@@ -99,11 +108,11 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
 //            log.error("{} with id {} not found", target, id);
 //            return new ResourceNotFoundException(idType);
 //        });
-//        log.info("Loaded {}", pheno.getId());
-//        FHIR fhir = resourceMapping.toFHIR(pheno);
-//        log.info("Converted: {}", fhir);
-//
-//        return fhir;
-        throw new OperationNotSupportedException("Not implemented");
+        log.info("Loaded {}", pheno.getId());
+        Object fhir = resourceMapping.run(List.of(pheno));
+        log.info("Converted: {}", fhir);
+
+        return (IBaseResource) fhir;
+//        throw new OperationNotSupportedException("Not implemented");
     }
 }
