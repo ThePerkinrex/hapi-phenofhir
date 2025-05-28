@@ -1,5 +1,6 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.transaction;
 
+import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4b.model.Resource;
@@ -19,7 +20,7 @@ import java.util.function.Consumer;
 public class Resolver {
     public static class Resolved {
         private final Resource resource;
-        private Object pheno;
+        private WithId<?> pheno;
 
         private List<Consumer<Object>> onBuild = new ArrayList<>();
 
@@ -32,11 +33,11 @@ public class Resolver {
             return resource;
         }
 
-        public Object getPheno() {
+        public WithId<?> getPheno() {
             return pheno;
         }
 
-        public void setPheno(Object pheno) {
+        public void setPheno(WithId<?> pheno) {
             this.pheno = pheno;
             for(var r : onBuild) {
                 r.accept(pheno);

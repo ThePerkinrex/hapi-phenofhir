@@ -1,5 +1,6 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers;
 
+import entities.org.phenopackets.schema.v2.Phenopacket;
 import entities.org.phenopackets.schema.v2.core.Individual;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperClass;
 import es.upm.etsiinf.tfg.juanmahou.mapper.annotation.Mapper;
@@ -59,5 +60,11 @@ public class KeyMapper implements MapperClass {
     public List<Identifier> mapPatientIdentifiers(Context ctx, List<String> alternateIds, Individual.Key id) {
         IdManager idManager = this.idManager.getObject(); // TODO support id
         return alternateIds.stream().map(idManager::curieAsId).toList();
+    }
+
+
+    @Mapper
+    public Phenopacket.Key mapPhenopacket(Context ctx, Identifier identifier) {
+        return new Phenopacket.Key(idManager.getObject().idAsCurie(identifier));
     }
 }

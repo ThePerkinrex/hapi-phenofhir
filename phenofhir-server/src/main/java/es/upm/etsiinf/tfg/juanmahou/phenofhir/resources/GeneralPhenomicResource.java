@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -86,33 +88,26 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
     @Read
     @Transactional(readOnly = true)
     public IBaseResource read(@IdParam IdType idType) throws Exception {
-        PhenoKey key = (PhenoKey) this.idMapper.run(List.of(idType));
+        CompletableFuture<IBaseResource> cf = new CompletableFuture<>();
+        this.idMapper.run(List.of(idType), id -> {
+            try {
+                PhenoKey key = (PhenoKey) id;
 
-        Pheno pheno = repository.findById(key).orElseThrow(() -> {
-            log.error("{} with id {} not found", target, key);
-            return new ResourceNotFoundException(idType);
+                Pheno pheno = repository.findById(key).orElseThrow(() -> {
+                    log.error("{} with id {} not found", target, key);
+                    return new ResourceNotFoundException(idType);
+                });
+
+                log.info("Loaded {}", pheno.getId());
+                resourceMapping.run(List.of(pheno), fhir -> {
+                    log.info("Converted: {}", fhir);
+                    cf.complete((IBaseResource) fhir);
+                });
+            }catch (Exception e) {
+                cf.completeExceptionally(e);
+            }
         });
 
-
-
-//        PhenoKey id;
-//        try {
-//            id = idMapper.getId(target, idStr);
-//        } catch (ClassNotFoundException | JsonProcessingException e) {
-//            log.error("Error reading id", e);
-//            throw new ResourceNotFoundException("Invalid id");
-//        }
-//
-//
-//        Pheno pheno = repository.findById(id).orElseThrow(() -> {
-//            log.error("{} with id {} not found", target, id);
-//            return new ResourceNotFoundException(idType);
-//        });
-        log.info("Loaded {}", pheno.getId());
-        Object fhir = resourceMapping.run(List.of(pheno));
-        log.info("Converted: {}", fhir);
-
-        return (IBaseResource) fhir;
-//        throw new OperationNotSupportedException("Not implemented");
+        return cf.get();
     }
 }

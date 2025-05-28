@@ -9,24 +9,18 @@ import java.util.stream.Collectors;
 
 @Component
 public class BaseDataResolver { // This one doesn't implement a prefix
-    private final Map<String, Resolver<BaseDataResolver>> resolvers;
+    public record BaseDataContext(){}
 
-    public BaseDataResolver(List<Resolver<BaseDataResolver>> resolvers) {
+    private final Map<String, Resolver<BaseDataContext>> resolvers;
+
+    public BaseDataResolver(List<Resolver<BaseDataContext>> resolvers) {
         this.resolvers = resolvers.stream().collect(Collectors.toMap(Resolver::prefix, r -> r));
     }
 
-    public DataGetter resolve(Context ctx, String dataPath) {
-        String[] parts = dataPath.split("\\.", 2);
-        String prefix, path;
-        if (parts.length == 2) {
-            prefix = parts[0];
-            path = parts[1];
-        }else{
-            prefix = "this";
-            path = dataPath;
-        }
-        Resolver<BaseDataResolver> r = resolvers.get(prefix);
-        if(r == null) throw new RuntimeException("Resolver for prefix " + prefix + " not found");
-        return r.resolve(ctx, path);
+    public DataGetter resolve(Context<?> ctx, String dataPath) {
+        String[] parts = ResolverUtils.getPrefixWithDefault(dataPath, "this");
+        Resolver<BaseDataContext> r = resolvers.get(parts[0]);
+        if(r == null) throw new RuntimeException("Resolver for prefix " + parts[0] + " not found");
+        return r.resolve(ctx, parts[1], new BaseDataContext());
     }
 }

@@ -6,16 +6,22 @@ import es.upm.etsiinf.tfg.juanmahou.mapper.config.Mapping;
 import es.upm.etsiinf.tfg.juanmahou.mapper.config.field.Field;
 import es.upm.etsiinf.tfg.juanmahou.mapper.context.Context;
 import es.upm.etsiinf.tfg.juanmahou.mapper.resolver.BaseDataResolver;
+import es.upm.etsiinf.tfg.juanmahou.mapper.resolver.ObjectResolver;
 import es.upm.etsiinf.tfg.juanmahou.mapper.resolver.ThisResolver;
+import es.upm.etsiinf.tfg.juanmahou.mapper.resolver.object.FieldResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.ResolvableType;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 import java.util.Map;
@@ -24,20 +30,32 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = TestConfig.class)
 public class AdapterTest {
     private static final Logger log = LoggerFactory.getLogger(AdapterTest.class);
     @Mock
     MapperResultAdapter resultAdapter;
     MapperRegistry registry;
 
+
+
+    @Autowired
+    TypeRegistry typeRegistry;
+    @Autowired
+    BaseDataResolver baseDataResolver;
+
     @BeforeEach
     void setUp() {
-        when(resultAdapter.adapt(any())).thenAnswer(x -> {
-            log.info("Called with {}", x);
+        when(resultAdapter.adaptOnBuilt(any())).thenAnswer(x -> {
+            log.info("Called onBuilt with {}", x);
             return x.getArgument(0);
         });
-        registry = new MapperRegistry(List.of(), new TypeRegistry(), new BaseDataResolver(List.of(new ThisResolver())), List.of(resultAdapter));
+        when(resultAdapter.adaptOnSet(any())).thenAnswer(x -> {
+            log.info("Called onSet with {}", x);
+            return x.getArgument(0);
+        });
+        registry = new MapperRegistry(List.of(), typeRegistry, baseDataResolver, List.of(resultAdapter));
     }
 
     public static class A {
@@ -57,10 +75,12 @@ public class AdapterTest {
         MapperRunner runner = registry.getMapper(ResolvableType.forClass(B.class), List.of(ResolvableType.forClass(A.class)));
         assertNotNull(runner);
 
-        Object res = runner.run(List.of(new A()));
-        assertNotNull(res);
-        assertTrue(ResolvableType.forInstance(res).equalsType(ResolvableType.forClass(B.class)));
-        verify(resultAdapter, times(1)).adapt(any());
+        runner.run(List.of(new A()), res->{
+            assertNotNull(res);
+            assertTrue(ResolvableType.forInstance(res).equalsType(ResolvableType.forClass(B.class)));
+            verify(resultAdapter, times(1)).adaptOnBuilt(any());
+        });
+
     }
 
     @Test
@@ -78,12 +98,13 @@ public class AdapterTest {
 
         A a = new A();
         a.a = 2;
-        Object res = runner.run(List.of(a));
-        assertNotNull(res);
-        assertTrue(ResolvableType.forInstance(res).equalsType(ResolvableType.forClass(B.class)));
-        B b = (B) res;
-        assertEquals(b.b, a.a);
-        verify(resultAdapter, times(2)).adapt(any());
+        runner.run(List.of(a), res -> {
+            assertNotNull(res);
+            assertTrue(ResolvableType.forInstance(res).equalsType(ResolvableType.forClass(B.class)));
+            B b = (B) res;
+            assertEquals(a.a, b.b);
+            verify(resultAdapter, times(2)).adaptOnBuilt(any());
+        });
     }
 
     public static class Doubler implements MapperClass {
@@ -110,11 +131,13 @@ public class AdapterTest {
 
         A a = new A();
         a.a = 2;
-        Object res = runner.run(List.of(a));
-        assertNotNull(res);
-        assertTrue(ResolvableType.forInstance(res).equalsType(ResolvableType.forClass(B.class)));
-        B b = (B) res;
-        assertEquals(b.b, a.a * 2);
-        verify(resultAdapter, times(2)).adapt(any());
+        runner.run(List.of(a), res -> {
+            assertNotNull(res);
+            assertTrue(ResolvableType.forInstance(res).equalsType(ResolvableType.forClass(B.class)));
+            B b = (B) res;
+            assertEquals(b.b, a.a * 2);
+            verify(resultAdapter, times(2)).adaptOnBuilt(any());
+        });
+
     }
 }

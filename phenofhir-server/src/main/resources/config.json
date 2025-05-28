@@ -18,6 +18,12 @@
 			],
 			"mondo": [
 				{"system":  "http://purl.obolibrary.org/obo/mondo.owl"}
+			],
+			"pe-ig-sec-type": [{
+				"system": "http://hl7.org/fhir/uv/phenomics-exchange/CodeSystem/section-type"
+			}],
+			"snomed": [
+				{"system":  "http://snomed.info/sct"}
 			]
 		}
 	},
@@ -48,6 +54,61 @@
 					"sources": ["alternate_ids", "id"],
 					"id": true,
 					"mapper": "PatientIds"
+				}
+			}
+		},
+		{
+			"source": "Composition",
+			"target": "entities.org.phenopackets.schema.v2.Phenopacket",
+			"sourceConditions": [
+				{
+					"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Phenopacket"
+				}
+			],
+			"fields": {
+				"id": {
+					"sources": ["identifier"],
+					"id": true
+				},
+				"subject": {
+					"sources": ["subject"]
+				},
+				"diseases": {
+					"sources": ["this|comp-sec|pe-ig-sec-type:diseases"]
+				}
+			}
+		},
+		{
+			"source": "Condition",
+			"target": "entities.org.phenopackets.schema.v2.core.Disease",
+			"sourceConditions": [
+				{
+					"profile": "http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Disease"
+				}
+			],
+			"fields": {
+				"term": {
+					"sources": ["code"]
+				},
+				"excluded": {
+					"sources": ["clinicalStatus"],
+					"mapper": "excluded"
+				},
+				"phenopacketDiseases": {
+					"sources": ["ctx|resulting|entities.org.phenopackets.schema.v2.Phenopacket|field|id|as|entities.org.phenopackets.schema.v2.Phenopacket$Key"]
+				},
+				"onset": {
+					"sources": ["onset"]
+				},
+				"resolution": {
+					"sources": ["abatement"]
+				},
+				"disease_stage": {
+					"sources": ["stage"],
+					"mapper": "diseaseStage"
+				},
+				"primary_site": {
+					"sources": ["bodySite"]
 				}
 			}
 		}

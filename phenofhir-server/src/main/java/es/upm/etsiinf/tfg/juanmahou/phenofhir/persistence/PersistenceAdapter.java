@@ -23,8 +23,17 @@ public class PersistenceAdapter implements MapperResultAdapter {
      * @return the adapted object, of the same type
      */
     @Override
-    public Object adapt(Object res) {
-        if(res.getClass().isAnnotationPresent(Entity.class)) {
+    public Object adaptOnSet(Object res) {
+        return res;
+    }
+
+    /**
+     * @param res the object to adapt
+     * @return the adapted object, of the same type
+     */
+    @Override
+    public Object adaptOnBuilt(Object res) {
+        if(res != null && res.getClass().isAnnotationPresent(Entity.class)) {
             log.info("Persisting {}", res);
             CrudRepository<Object, Object> repository = repositoryProvider.getCrudRepository(ResolvableType.forInstance(res));
             return repository.save(res);

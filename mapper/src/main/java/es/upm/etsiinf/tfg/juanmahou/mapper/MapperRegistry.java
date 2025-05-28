@@ -18,10 +18,10 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 @Component
 public class MapperRegistry {
     private static final Logger log = LoggerFactory.getLogger(MapperRegistry.class);
-    private static final ResolvableType CONTEXT = ResolvableType.forClass(Context.class);
 
     public record MapperKey(ResolvableType ret, List<ResolvableType> params) {
         public boolean paramsEquals(List<ResolvableType> other) {
@@ -74,15 +73,25 @@ public class MapperRegistry {
                     "already been defined");
         }
         log.info("Registering mapper {} ({}) - {}", key, key.hashCode(), name);
-        named.put(name, (ctx, params) -> {
+        named.put(name, (ctx, params, onSet, onBuilt) -> {
             log.info("Running mapper {} - {} with params {} ({})", key, name, params, ResolvableType.forInstance(params));
-            Object res = runner.run(ctx, params);
-            ResolvableType original = ResolvableType.forInstance(res);
-            for(var adapter : resultAdapters) {
-                res = adapter.adapt(res);
-                assert original.isAssignableFrom(ResolvableType.forInstance(res));
-            }
-            return res;
+            runner.run(ctx, params, res -> {
+                ResolvableType original = ResolvableType.forInstance(res);
+                for(var adapter : resultAdapters) {
+                    res = adapter.adaptOnSet(res);
+                    assert original.isAssignableFrom(ResolvableType.forInstance(res));
+                }
+                onSet.accept(res);
+            }, res -> {
+                ResolvableType original = ResolvableType.forInstance(res);
+                for(var adapter : resultAdapters) {
+                    res = adapter.adaptOnBuilt(res);
+                    assert original.isAssignableFrom(ResolvableType.forInstance(res));
+                }
+                onBuilt.accept(res);
+
+            });
+
         });
     }
 
@@ -99,9 +108,20 @@ public class MapperRegistry {
                     log.warn("Mapper {} doesn't receive any arguments (needs to receive context), ignoring", m);
                     continue;
                 }
-                if (!ResolvableType.forMethodParameter(m, 0).equalsType(CONTEXT)) {
+                boolean setAfterMethod;
+                ResolvableType result;
+                ResolvableType retType = ResolvableType.forMethodReturnType(m);
+                ResolvableType context = ResolvableType.forMethodParameter(m, 0).as(Context.class);
+                if (context.equalsType(ResolvableType.NONE)) {
                     log.warn("Mapper {} doesn't receive the context as first argument, ignoring", m);
                     continue;
+                }
+                if(ResolvableType.forClass(Void.class).isAssignableFrom(retType)) {
+                    setAfterMethod = false;
+                    result = context.getGeneric(0);
+                }else{
+                    result = PrimitiveUtil.wrapPrimitive(retType);
+                    setAfterMethod = true;
                 }
                 List<ResolvableType> mapperParams = IntStream
                         .iterate(1, i -> i + 1)
@@ -109,34 +129,41 @@ public class MapperRegistry {
                         .mapToObj(i -> ResolvableType.forMethodParameter(m, i))
                         .map(PrimitiveUtil::wrapPrimitive)
                         .toList();
-                ResolvableType result = PrimitiveUtil.wrapPrimitive(ResolvableType.forMethodReturnType(m));
                 MapperKey key = new MapperKey(
                         result,
                         mapperParams
                 );
-                MapperRunner runner = (ctx, params) -> {
+                MapperRunner runner = (parent, params, onSet, onBuilt) -> {
                     if (params.size() == mapperParams.size()) {
                         Object[] nextParams = new Object[params.size() + 1];
-
+                        log.info("Running mapper {} - {}", key, map.value());
                         for (int i = 0; i < params.size(); i++) {
                             Object p = params.get(i);
                             var t = ResolvableType.forInstance(p);
                             var u = mapperParams.get(i);
-                            if (!u.isAssignableFrom(t) && !u.toClass().isAssignableFrom(t.toClass())) {
+                            if (p != null && !u.isAssignableFrom(t) && !u.toClass().isAssignableFrom(t.toClass())) {
                                 throw new IllegalArgumentException(t + " is not assignable to " + u);
                             }
                             nextParams[i + 1] = p;
                         }
-                        Context next = ctx == null ? new Context(params, result) : ctx.next(params, result);
-                        nextParams[0] = next;
+                        Context<Object> ctx = parent == null ? new Context<>(params, result) : parent.next(params, result);
+                        ctx.onSet(onSet);
+                        ctx.onSet(onBuilt);
+                        nextParams[0] = ctx;
 
                         try {
-                            return m.invoke(mapperClass, nextParams);
+                            Object res = m.invoke(mapperClass, nextParams);
+                            log.info("Invoked");
+                            if(setAfterMethod) {
+                                ctx.accept(res);
+                                log.info("Set after method");
+                            }
                         } catch (IllegalAccessException | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }
+                    }else{
+                        throw new IllegalArgumentException("Number of arguments is incorrect");
                     }
-                    throw new IllegalArgumentException("Number of arguments is incorrect");
                 };
                 registerRunner(key, map.value(), runner);
             }
@@ -157,12 +184,13 @@ public class MapperRegistry {
                         e.getValue())
         ).toList();
         List<SourceCondition> conditions = mapping.getSourceConditions();
-        MapperRunner runner = (ctx, params) -> {
+        MapperRunner runner = (parent, params, onSet, onBuilt) -> {
             if (params.size() != 1 || !ResolvableType.forInstance(params.getFirst()).equalsType(source))
                 throw new RuntimeException("params dont match the expected source " + source);
-            Context next = ctx == null ? new Context(params, target) : ctx.next(params, target);
             Object o = params.getFirst();
             Object res;
+            Context<Object> ctx = parent == null ? new Context<>(params, target) : parent.next(params, target);
+            ctx.onSet(onSet);
             try {
                 res = targetConstructor.newInstance();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -173,25 +201,55 @@ public class MapperRegistry {
                     throw condition.getException(o);
                 }
             }
-            for (var f : fields) {
-                List<DataGetter> dataGetters =
-                        f.field.getSources().stream().map(s -> baseDataResolver.resolve(next, s)).toList();
-                MapperRunner fieldMapper = getMapper(f.setter.getFieldClass(),
-                        dataGetters.stream().map(DataGetter::getType).toList(), f.field.getMapper());
-                if(fieldMapper == null) throw new NullPointerException("Cant map fields " + f + " types " + dataGetters.stream().map(DataGetter::getType).toList());
-                Object result = fieldMapper.run(next, dataGetters.stream().map(DataGetter::get).toList());
-                if(f.field.isId()) {
-                    next.setId(result);
+            ctx.accept(res);
+
+            List<MappingField> rest = new ArrayList<>(fields.size());
+            Consumer<Object> fieldOnBuilt = new Consumer<Object>() {
+                private int i = 0;
+                @Override
+                public void accept(Object o) {
+                    if(++i >= fields.size()) {
+                        onBuilt.accept(res);
+                    }
                 }
-                f.setter.set(res, result);
+            };
+
+            for (var f : fields) {
+                if(f.field.isId()) {
+                    Consumer<Object> setter =result -> {
+                        f.setter.set(res, result);
+
+                        ctx.setId(result);
+                    };
+                    processField(f, ctx, setter, fieldOnBuilt);
+
+                }else{
+                    rest.add(f);
+                }
             }
-            return res;
+            for(var f : rest) {
+                Consumer<Object> setter =result -> {
+                    f.setter.set(res, result);
+                };
+
+                processField(f, ctx, setter, fieldOnBuilt);
+
+            }
         };
         MapperKey key = new MapperKey(
                 target,
                 List.of(source)
         );
         registerRunner(key, NAME, runner);
+    }
+
+    private void processField(MappingField f, Context<Object> ctx, Consumer<Object> onSet, Consumer<Object> onBuilt) throws Exception {
+        List<DataGetter> dataGetters =
+                f.field.getSources().stream().map(s -> baseDataResolver.resolve(ctx, s)).toList();
+        MapperRunner fieldMapper = getMapper(f.setter.getFieldClass(),
+                dataGetters.stream().map(DataGetter::getType).toList(), f.field.getMapper());
+        if(fieldMapper == null) throw new NullPointerException("Cant map fields " + f + " types " + dataGetters.stream().map(DataGetter::getType).toList());
+        fieldMapper.run(ctx, dataGetters.stream().map(DataGetter::get).toList(), onSet, onBuilt);
     }
 
 
@@ -203,14 +261,18 @@ public class MapperRegistry {
         log.info("Getting {} ({}) - {}", new MapperKey(ret, args), new MapperKey(ret, args).hashCode(), name);
         MapperRunner res = mappers.computeIfAbsent(new MapperKey(ret, args), k -> new HashMap<>()).get(name);
         if(res == null && args.size() == 1 && ret.isAssignableFrom(args.getFirst())) {
-            res = ((ctx, params) -> {
+            res = ((ctx, params, onSet, onBuilt) -> {
                 Object x = params.getFirst();
+                Object onSetObj = x;
                 ResolvableType original = ResolvableType.forInstance(x);
                 for(var adapter : resultAdapters) {
-                    x = adapter.adapt(x);
+                    onSetObj = adapter.adaptOnSet(onSetObj);
+                    assert original.isAssignableFrom(ResolvableType.forInstance(onSetObj));
+                    x = adapter.adaptOnBuilt(x);
                     assert original.isAssignableFrom(ResolvableType.forInstance(x));
                 }
-                return x;
+                onSet.accept(onSetObj);
+                onBuilt.accept(x);
             });
         }
         return res;

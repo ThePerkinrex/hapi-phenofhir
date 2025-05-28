@@ -26,6 +26,7 @@ public class Getter<T, F> {
     public Getter(ResolvableType type, String name) {
         Function<T, F>   tempGetter     = null;
         ResolvableType    rawFieldClass = null;
+        log.info("Getter for {}.{}", type, name);
         Class<?> clazz = Objects.requireNonNull(type.resolve());
 
         // 1) Try bean-style accessors
