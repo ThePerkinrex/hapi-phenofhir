@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ public class TransactionProvider {
 
             WithId<?> res = resolver.get(id).getPheno();
             if(res == null) {
+                log.error("Bundle entry for {} wasn't resolved", id);
                 getEntry().getResponse().setStatus("500");
             }else{
                 getEntry().getResponse().setStatus("201");

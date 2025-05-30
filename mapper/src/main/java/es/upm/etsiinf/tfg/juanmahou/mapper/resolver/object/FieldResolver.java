@@ -27,13 +27,13 @@ public class FieldResolver implements Resolver<ObjectResolver.ObjectResolverCont
     }
 
     @Override
-    public DataGetter resolve(Context ctx, String dataPath, ObjectResolver.ObjectResolverContext parentContext) {
+    public DataGetter resolve(Context<?> ctx, String dataPath, ObjectResolver.ObjectResolverContext parentContext) {
         String[] split = ResolverUtils.splitFirst(dataPath);
         Object o = parentContext.o();
         Getter<Object, Object> getter = new Getter<>(parentContext.type(), split[0]);
         if(split.length == 2) {
             Object child = getter.get(o);
-            if(child == null) throw new NullPointerException();
+            if(child == null) throw new NullPointerException(dataPath + " resolved a child which was null");
             ObjectResolver resolver = objectResolverProvider.getObject();
             log.info("Resolving {} for child {}", split[1], child);
             return resolver.resolve(ctx, split[1], child, getter.getFieldClass()); // Nesting

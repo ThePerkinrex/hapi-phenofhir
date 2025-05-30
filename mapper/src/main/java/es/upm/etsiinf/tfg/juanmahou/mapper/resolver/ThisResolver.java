@@ -17,8 +17,17 @@ public class ThisResolver implements Resolver<BaseDataResolver.BaseDataContext> 
     }
 
     @Override
-    public DataGetter resolve(Context ctx, String dataPath, BaseDataResolver.BaseDataContext parentContext) {
+    public DataGetter resolve(Context<?> ctx, String dataPath, BaseDataResolver.BaseDataContext parentContext) {
         if(ctx.getParams().size() != 1) throw new RuntimeException("Can't call this. resolver on more than one input object");
-        return objectResolver.resolve(ctx, dataPath, ctx.getParams().getFirst());
+        if(dataPath.isEmpty()) {
+            return new DataGetter() {
+                @Override
+                public Object get() {
+                    return ctx.getParams().getFirst();
+                }
+            };
+        }else{
+            return objectResolver.resolve(ctx, dataPath, ctx.getParams().getFirst());
+        }
     }
 }

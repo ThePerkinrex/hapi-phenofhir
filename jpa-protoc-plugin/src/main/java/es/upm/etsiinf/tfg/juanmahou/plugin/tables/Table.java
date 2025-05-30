@@ -266,6 +266,7 @@ public class Table {
                                 List.of("mappedBy = \"" + childFieldName + '"', LAZY_FETCH) :
                                 List.of(LAZY_FETCH)
                 );
+                parentAnnotationParams.add(CASCADE_ALL);
 
                 switch (mfd.getCard()) {
                     case REQUIRED -> {
@@ -277,7 +278,7 @@ public class Table {
                     }
                     case REPEATED -> {
                         parentAnnType = TypeRegistry.ONE_TO_MANY_ANNOTATION;
-                        parentAnnotationParams.add(CASCADE_ALL);
+//                        parentAnnotationParams.add(CASCADE_ALL);
                         childAnnotations = List.of(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(LAZY_FETCH)));
                     }
                 }

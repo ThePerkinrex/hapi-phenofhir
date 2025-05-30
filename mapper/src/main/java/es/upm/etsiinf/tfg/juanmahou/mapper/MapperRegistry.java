@@ -76,17 +76,24 @@ public class MapperRegistry {
         named.put(name, (ctx, params, onSet, onBuilt) -> {
             log.info("Running mapper {} - {} with params {} ({})", key, name, params, ResolvableType.forInstance(params));
             runner.run(ctx, params, res -> {
-                ResolvableType original = ResolvableType.forInstance(res);
                 for(var adapter : resultAdapters) {
                     res = adapter.adaptOnSet(res);
-                    assert original.isAssignableFrom(ResolvableType.forInstance(res));
+                    ResolvableType rt = ResolvableType.forInstance(res);
+                    if(res != null && !key.ret.isAssignableFrom(rt) && !key.ret.toClass().isAssignableFrom(rt.toClass())) {
+                        log.error("res is not null and {} is not assignable from {}", key.ret, rt);
+                        throw new RuntimeException();
+                    }
                 }
                 onSet.accept(res);
             }, res -> {
-                ResolvableType original = ResolvableType.forInstance(res);
                 for(var adapter : resultAdapters) {
                     res = adapter.adaptOnBuilt(res);
-                    assert original.isAssignableFrom(ResolvableType.forInstance(res));
+
+                    ResolvableType rt = ResolvableType.forInstance(res);
+                    if(res != null && !key.ret.isAssignableFrom(rt) && !key.ret.toClass().isAssignableFrom(rt.toClass())) {
+                        log.error("res is not null and {} is not assignable from {}", key.ret, rt);
+                        throw new RuntimeException();
+                    }
                 }
                 onBuilt.accept(res);
 
@@ -285,6 +292,21 @@ public class MapperRegistry {
                 .entrySet()
                 .stream()
                 .filter(e -> e.getKey().paramsEquals(args))
+                .flatMap(e -> e
+                        .getValue()
+                        .entrySet()
+                        .stream()
+                        .map(x -> new MapperAndData(x.getValue(), e.getKey(), x.getKey())))
+                ;
+    }
+
+
+
+    public Stream<MapperAndData> getAllForRet(ResolvableType ret) {
+        return mappers
+                .entrySet()
+                .stream()
+                .filter(e -> ret.isAssignableFrom(e.getKey().ret()))
                 .flatMap(e -> e
                         .getValue()
                         .entrySet()

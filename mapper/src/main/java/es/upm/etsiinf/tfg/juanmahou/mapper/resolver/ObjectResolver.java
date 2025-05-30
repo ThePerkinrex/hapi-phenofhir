@@ -18,11 +18,11 @@ public class ObjectResolver { // This one doesn't implement a prefix
         this.resolvers = resolvers.stream().collect(Collectors.toMap(Resolver::prefix, r -> r));
     }
 
-    public DataGetter resolve(Context ctx, String dataPath, Object o) {
+    public DataGetter resolve(Context<?> ctx, String dataPath, Object o) {
         return resolve(ctx, dataPath, o, ResolvableType.forInstance(o));
     }
 
-    public DataGetter resolve(Context ctx, String dataPath, Object o, ResolvableType type) {
+    public DataGetter resolve(Context<?> ctx, String dataPath, Object o, ResolvableType type) {
         String[] parts = ResolverUtils.getPrefixWithDefault(dataPath, "field");
 
         Resolver<ObjectResolverContext> r = resolvers.get(parts[0]);

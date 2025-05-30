@@ -4,5 +4,5 @@ import es.upm.etsiinf.tfg.juanmahou.mapper.context.Context;
 
 public interface Resolver<ParentContext> {
     String prefix();
-    DataGetter resolve(Context ctx, String dataPath, ParentContext parentContext);
+    DataGetter resolve(Context<?> ctx, String dataPath, ParentContext parentContext);
 }

@@ -1,5 +1,6 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.resources;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.server.IResourceProvider;
@@ -92,6 +93,7 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
         this.idMapper.run(List.of(idType), id -> {
             try {
                 PhenoKey key = (PhenoKey) id;
+                log.info("Loading with id {}", id);
 
                 Pheno pheno = repository.findById(key).orElseThrow(() -> {
                     log.error("{} with id {} not found", target, key);
@@ -101,7 +103,13 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
                 log.info("Loaded {}", pheno.getId());
                 resourceMapping.run(List.of(pheno), fhir -> {
                     log.info("Converted: {}", fhir);
-                    cf.complete((IBaseResource) fhir);
+                    IBaseResource baseResource = (IBaseResource) fhir;
+//                    String json = FhirContext.forR4B()
+//                            .newJsonParser()
+//                            .setPrettyPrint(true)
+//                            .encodeResourceToString(baseResource);
+//                    log.info("Converted: {}", json);
+                    cf.complete(baseResource);
                 });
             }catch (Exception e) {
                 cf.completeExceptionally(e);

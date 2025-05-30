@@ -1,12 +1,13 @@
 primaryKey(pk, id_iface) ::= <<
 <pk.embeddable>
-public static class Key implements <id_iface> {
+public static class Key extends <id_iface> {
     <pk.fields:field(); separator="\n">
 
     public Key() {}
     public Key(<pk.fields:{f | <f.type> <f.name>}; separator=", ">) {
         <pk.fields:{f | this.<f.name> = <f.name>;}; separator="\n">
     }
+
 
     @Override
     public boolean equals(Object o) {
@@ -23,13 +24,19 @@ public static class Key implements <id_iface> {
     <pk.accessors:{a | <accessor(a, "Key")>}; separator="\n\n">
 
 
+<if(pk.onlyString)> <! only has one element !>
     @Override
     public String toString() {
-        <if(first(pk.fields) && !rest(pk.fields))> <! only has one element !>
-            return String.valueOf(this.<first(pk.fields).name>);
-        <else>
-            return "Key {" + <pk.fields:{f | "<f.name>=" + this.<f.name> + ", "}; separator=" + "> + "}";
-        <endif>
+        return this.<first(pk.fields).name>;
     }
+
+    public static Key fromString(String <first(pk.fields).name>) throws java.io.IOException {
+        return new Key(<first(pk.fields).name>);
+    }
+<else>
+    public static Key fromString(String data) throws java.io.IOException {
+        return <id_iface>.fromBase64Json(data, Key.class);
+    }
+<endif>
 }
 >>

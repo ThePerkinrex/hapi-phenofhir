@@ -22,6 +22,9 @@
 			"pe-ig-sec-type": [{
 				"system": "http://hl7.org/fhir/uv/phenomics-exchange/CodeSystem/section-type"
 			}],
+			"loinc": [
+				{"system":  "http://loinc.org"}
+			],
 			"snomed": [
 				{"system":  "http://snomed.info/sct"}
 			]
@@ -75,6 +78,9 @@
 				},
 				"diseases": {
 					"sources": ["this|comp-sec|pe-ig-sec-type:diseases"]
+				},
+				"meta_data": {
+					"sources": ["author", "date"]
 				}
 			}
 		},
@@ -108,8 +114,50 @@
 					"mapper": "diseaseStage"
 				},
 				"primary_site": {
-					"sources": ["bodySite"]
+					"sources": ["bodySite"],
+					"mapper": "primarySite"
 				}
+			}
+		},
+		{
+			"source": "entities.org.phenopackets.schema.v2.Phenopacket",
+			"target": "Composition",
+			"fields": {
+				"identifier": {
+					"sources": ["id"],
+					"id": true
+				},
+				"subject": {
+					"sources": ["subject"]
+				},
+				"section": {
+					"sources": ["diseases"]
+				},
+				"status": {
+					"sources": ["string|preliminary"]
+				},
+				"type": {
+					"sources": [],
+					"mapper": "phenopacketType"
+				},
+				"date": {
+					"sources": ["this|field|meta_data|created"]
+				},
+				"author": {
+					"sources": ["this|field|meta_data|created_by"],
+					"mapper": "phenopacketCreatedBy"
+				},
+				"title": {
+					"sources": ["this|"],
+					"mapper": "phenopacketTitle"
+				}
+			}
+		},
+		{
+			"source": "entities.org.phenopackets.schema.v2.core.Disease",
+			"target": "Condition",
+			"fields": {
+
 			}
 		}
 	]

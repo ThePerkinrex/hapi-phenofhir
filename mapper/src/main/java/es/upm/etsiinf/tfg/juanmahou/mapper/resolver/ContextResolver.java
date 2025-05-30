@@ -24,7 +24,7 @@ public class ContextResolver implements Resolver<BaseDataResolver.BaseDataContex
     }
 
     @Override
-    public DataGetter resolve(Context ctx, String dataPath, BaseDataResolver.BaseDataContext baseDataContext) {
+    public DataGetter resolve(Context<?> ctx, String dataPath, BaseDataResolver.BaseDataContext baseDataContext) {
         String[] parts = ResolverUtils.getPrefixWithDefault(dataPath, null);
         if(parts[0] == null) throw new RuntimeException("No context resolver type specified");
         Resolver<Ctx> r = resolvers.get(parts[0]);

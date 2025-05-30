@@ -30,7 +30,7 @@ public class CastResolver implements Resolver<ObjectResolver.ObjectResolverConte
     }
 
     @Override
-    public DataGetter resolve(Context ctx, String dataPath, ObjectResolver.ObjectResolverContext parentContext) {
+    public DataGetter resolve(Context<?> ctx, String dataPath, ObjectResolver.ObjectResolverContext parentContext) {
         String[] split = ResolverUtils.splitFirst(dataPath);
         ResolvableType type = typeRegistry.resolve(split[0]);
         ObjectResolver resolver = objectProvider.getObject();

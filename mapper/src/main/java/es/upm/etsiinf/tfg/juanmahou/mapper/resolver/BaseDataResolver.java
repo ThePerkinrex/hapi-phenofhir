@@ -1,6 +1,8 @@
 package es.upm.etsiinf.tfg.juanmahou.mapper.resolver;
 
 import es.upm.etsiinf.tfg.juanmahou.mapper.context.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -8,7 +10,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
-public class BaseDataResolver { // This one doesn't implement a prefix
+public class BaseDataResolver {
+    private static final Logger log = LoggerFactory.getLogger(BaseDataResolver.class); // This one doesn't implement a prefix
     public record BaseDataContext(){}
 
     private final Map<String, Resolver<BaseDataContext>> resolvers;
@@ -18,6 +21,7 @@ public class BaseDataResolver { // This one doesn't implement a prefix
     }
 
     public DataGetter resolve(Context<?> ctx, String dataPath) {
+        log.info("Resolving {}", dataPath);
         String[] parts = ResolverUtils.getPrefixWithDefault(dataPath, "this");
         Resolver<BaseDataContext> r = resolvers.get(parts[0]);
         if(r == null) throw new RuntimeException("Resolver for prefix " + parts[0] + " not found");

@@ -24,7 +24,7 @@ public class TypeRegistry {
         addType(SourceType.build(FieldDescriptor.JavaType.DOUBLE), new PrimitiveType("double"));
         addType(SourceType.build(FieldDescriptor.JavaType.INT), new PrimitiveType("int"));
         addType(SourceType.build(FieldDescriptor.JavaType.LONG), new PrimitiveType("long"));
-        addType(SourceType.build(FieldDescriptor.JavaType.STRING), new PrimitiveType("String"));
+        addType(SourceType.build(FieldDescriptor.JavaType.STRING), new ClassType(String.class));
 
         addType(SourceType.build("google.protobuf.Timestamp"), new ClassType(Instant.class));
     }

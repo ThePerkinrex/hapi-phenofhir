@@ -28,7 +28,7 @@ public class IndexResolver implements Resolver<ObjectResolver.ObjectResolverCont
     }
 
     @Override
-    public DataGetter resolve(Context ctx, String dataPath, ObjectResolver.ObjectResolverContext parentContext) {
+    public DataGetter resolve(Context<?> ctx, String dataPath, ObjectResolver.ObjectResolverContext parentContext) {
         if(parentContext.o() instanceof List<?> l) {
             ResolvableType elementType = parentContext.type().as(List.class).getGeneric(0);
             String[] split = ResolverUtils.splitFirst(dataPath);

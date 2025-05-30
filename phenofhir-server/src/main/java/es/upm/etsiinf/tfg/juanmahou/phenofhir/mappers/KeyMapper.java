@@ -1,6 +1,7 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers;
 
 import entities.org.phenopackets.schema.v2.Phenopacket;
+import entities.org.phenopackets.schema.v2.core.Disease;
 import entities.org.phenopackets.schema.v2.core.Individual;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperClass;
 import es.upm.etsiinf.tfg.juanmahou.mapper.annotation.Mapper;
@@ -64,7 +65,13 @@ public class KeyMapper implements MapperClass {
 
 
     @Mapper
-    public Phenopacket.Key mapPhenopacket(Context ctx, Identifier identifier) {
+    public Phenopacket.Key mapPhenopacket(Context<?> ctx, Identifier identifier) {
         return new Phenopacket.Key(idManager.getObject().idAsCurie(identifier));
+    }
+
+    @Mapper
+    public Identifier mapCompositionIdentifier(Context<?> ctx, Phenopacket.Key identifier) {
+        IdManager idManager = this.idManager.getObject();
+        return idManager.curieAsId(identifier.getId());
     }
 }

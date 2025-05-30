@@ -23,12 +23,12 @@ public class ResultingResolver implements Resolver<ContextResolver.Ctx> {
     }
 
     @Override
-    public DataGetter resolve(Context ctx, String dataPath, ContextResolver.Ctx ctx2) {
+    public DataGetter resolve(Context<?> ctx, String dataPath, ContextResolver.Ctx ctx2) {
         String[] split = ResolverUtils.splitFirst(dataPath);
         if(split.length != 2) throw new RuntimeException(dataPath + " should have included the resulting type");
         ResolvableType type = typeRegistry.resolve(split[0]);
         ObjectResolver resolver = objectProvider.getObject();
-        Context frame = ctx.getFrameResultingInType(type);
+        Context<?> frame = ctx.getFrameResultingInType(type);
         return resolver.resolve(ctx, split[1], frame, ResolvableType.forClass(Context.class));
     }
 }
