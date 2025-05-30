@@ -1,10 +1,13 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir;
 
+import ca.uhn.fhir.context.FhirContext;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entities.org.phenopackets.schema.v2.Phenopacket;
 import entities.org.phenopackets.schema.v2.core.Individual;
 import entities.org.phenopackets.schema.v2.core.MetaData;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
+import org.hl7.fhir.r4b.model.Composition;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +51,9 @@ class PhenoFhirApplicationTests {
 
     @Autowired
     private RepositoryProvider repositoryProvider;
+
+    @Autowired
+    private FhirContext fhirContext;
 
     @Test
     void contextLoads() {
@@ -109,7 +115,7 @@ class PhenoFhirApplicationTests {
 
     @Test
     @Transactional
-    void readPhenopacket() {
+    void readPhenopacket() throws JsonProcessingException {
         var indivRepo = repositoryProvider.getCrudRepository(
                 ResolvableType.forClass(Individual.class));
         var metaRepo = repositoryProvider.getCrudRepository(
@@ -149,6 +155,7 @@ class PhenoFhirApplicationTests {
         log.info("RES: {}", resp.getBody());
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-
+        Composition comp = fhirContext.newJsonParser().parseResource(Composition.class, resp.getBody());
+        assertThat(comp.getSubject().getReference()).isEqualTo("phenofhir:ind1");
     }
 }
