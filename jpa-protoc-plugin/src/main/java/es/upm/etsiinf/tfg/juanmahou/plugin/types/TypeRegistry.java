@@ -13,24 +13,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 public class TypeRegistry {
     private static final Map<SourceType, TypeMapping> TYPE_REGISTRY;
 
     static {
         TYPE_REGISTRY = new HashMap<>();
-        addType(SourceType.build(FieldDescriptor.JavaType.BOOLEAN), new PrimitiveType("boolean"));
-        addType(SourceType.build(FieldDescriptor.JavaType.FLOAT), new PrimitiveType("float"));
-        addType(SourceType.build(FieldDescriptor.JavaType.DOUBLE), new PrimitiveType("double"));
-        addType(SourceType.build(FieldDescriptor.JavaType.INT), new PrimitiveType("int"));
-        addType(SourceType.build(FieldDescriptor.JavaType.LONG), new PrimitiveType("long"));
+        addType(SourceType.build(FieldDescriptor.JavaType.BOOLEAN), new PrimitiveType("Boolean"));
+        addType(SourceType.build(FieldDescriptor.JavaType.FLOAT), new PrimitiveType("Float"));
+        addType(SourceType.build(FieldDescriptor.JavaType.DOUBLE), new PrimitiveType("Double"));
+        addType(SourceType.build(FieldDescriptor.JavaType.INT), new PrimitiveType("Integer"));
+        addType(SourceType.build(FieldDescriptor.JavaType.LONG), new PrimitiveType("Long"));
         addType(SourceType.build(FieldDescriptor.JavaType.STRING), new ClassType(String.class));
 
-        addType(SourceType.build("google.protobuf.Timestamp"), new ClassType(Instant.class));
+        addType(SourceType.build("google.protobuf.Timestamp"), new ClassType(Instant.class), f -> "com.google.protobuf.Timestamp.newBuilder().setSeconds(" + f + ".getEpochSecond()).setNanos(" + f + ".getNano()).build()");
     }
 
     private static void addType(SourceType source, JavaType javaType) {
         TYPE_REGISTRY.put(source, new TypeMapping(source, javaType));
+    }
+    private static void addType(SourceType source, JavaType javaType, Function<String, String> asProto) {
+        TYPE_REGISTRY.put(source, new TypeMapping(source, javaType, asProto));
     }
 
     public static TypeMapping getMapping(SourceType source) {

@@ -1,6 +1,7 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.transaction;
 
 import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.CurieRegistryManager;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4b.model.Resource;
@@ -21,12 +22,16 @@ public class Resolver {
     public static class Resolved {
         private final Resource resource;
         private WithId<?> pheno;
+        private CurieRegistryManager.CurieRegistry registry;
+        private final CurieRegistryManager curieRegistryManager;
 
         private List<Consumer<Object>> onBuild = new ArrayList<>();
 
-        public Resolved(Resource resource) {
+        public Resolved(Resource resource, CurieRegistryManager curieRegistryManager) {
             this.resource = resource;
+            this.curieRegistryManager = curieRegistryManager;
             this.pheno = null;
+            this.registry = null;
         }
 
         public Resource getResource() {
@@ -43,6 +48,11 @@ public class Resolver {
                 r.accept(pheno);
             }
             this.onBuild.clear();
+            this.registry = curieRegistryManager.getRegistry();
+        }
+
+        public CurieRegistryManager.CurieRegistry getRegistry() {
+            return registry;
         }
 
         public void onBuild(Consumer<Object> consumer) {
@@ -66,8 +76,10 @@ public class Resolver {
 
     private final Map<String, Resolved> resources;
     private final GeneralPhenomicResources generalPhenomicResources;
+    private final CurieRegistryManager curieRegistryManager;
 
-    public Resolver(GeneralPhenomicResources generalPhenomicResources) {
+    public Resolver(GeneralPhenomicResources generalPhenomicResources, CurieRegistryManager curieRegistryManager) {
+        this.curieRegistryManager = curieRegistryManager;
         log.info("Building resolver");
         resources = new HashMap<>();
         this.generalPhenomicResources = generalPhenomicResources;
@@ -80,7 +92,7 @@ public class Resolver {
     }
 
     public Resolved register(String id, Resource res) {
-        return register(id, new Resolved(res));
+        return register(id, new Resolved(res, curieRegistryManager));
     }
 
     public Resolved get(String id) {

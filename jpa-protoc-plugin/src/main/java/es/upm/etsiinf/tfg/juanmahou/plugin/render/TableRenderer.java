@@ -32,6 +32,7 @@ public class TableRenderer {
         ClassType javaType = table.getJavaType();
         var enums = table.getEnums();
         template.add("package", javaType.getPackageName());
+        template.add("non_prefixed_package", javaType.getPackageName().split("\\.", 2)[1]);
         template.add("name", javaType.getName());
         template.add("entity", new Annotation(TypeRegistry.ENTITY_ANNOTATION));
         template.add("fields", rest_fields);
@@ -42,6 +43,7 @@ public class TableRenderer {
         template.add("id_iface", TypeRegistry.ID_IFACE);
         template.add("with_id_iface", TypeRegistry.WITH_ID_IFACE);
         template.add("owned", table.getOwned());
+        template.add("builder_calls", table.getBuilderCalls());
         return template.render();
     }
 }

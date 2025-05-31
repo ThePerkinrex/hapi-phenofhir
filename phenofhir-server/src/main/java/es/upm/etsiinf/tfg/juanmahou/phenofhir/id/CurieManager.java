@@ -3,6 +3,7 @@ package es.upm.etsiinf.tfg.juanmahou.phenofhir.id;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.entities.CurieMapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.CurieMappingRepository;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -27,12 +28,15 @@ public class CurieManager {
         }
     }
 
+    private final ObjectProvider<CurieRegistryManager> curieRegistryManager;
+
     private final CurieMappingRepository curieMappingRepository;
     private final Map<String, System> systemForCurieCache;
     private final Map<System, String> curieForSystemCache;
     private final Config config;
 
-    public CurieManager(CurieMappingRepository curieMappingRepository, Config config) {
+    public CurieManager(ObjectProvider<CurieRegistryManager> curieRegistryManager, CurieMappingRepository curieMappingRepository, Config config) {
+        this.curieRegistryManager = curieRegistryManager;
         this.curieMappingRepository = curieMappingRepository;
         this.curieForSystemCache = new HashMap<>();
         this.systemForCurieCache = new HashMap<>();
@@ -52,7 +56,10 @@ public class CurieManager {
 
     public String getCurieForSystem(System system) {
         var cached = curieForSystemCache.get(system);
-        if(cached != null) return cached;
+        if(cached != null) {
+            registerCurie(cached);
+            return cached;
+        }
         CurieMapping mapping;
         if (system.version() != null) {
             mapping = curieMappingRepository.findBySystemAndVersion(system.system(), system.version());
@@ -64,11 +71,13 @@ public class CurieManager {
             mapping = curieMappingRepository.save(mapping);
         }
 
+        registerCurie(mapping.getCurie());
         return mapping.getCurie();
     }
 
 
     public System getSystemForCurie(String curie) {
+        registerCurie(curie);
         var cached = systemForCurieCache.get(curie);
         if(cached != null) return cached;
 
@@ -79,10 +88,17 @@ public class CurieManager {
     }
 
     public System getOwnSystem() {
+        registerCurie(config.getOwnIdentifiers().getCurie());
         return new System(config.getOwnIdentifiers().getSystem(), config.getOwnIdentifiers().getVersion());
     }
 
     public String getOwnCurie() {
+        registerCurie(config.getOwnIdentifiers().getCurie());
         return config.getOwnIdentifiers().getCurie();
+    }
+
+    public void registerCurie(String curie) {
+        CurieRegistryManager curieRegistryManager = this.curieRegistryManager.getIfAvailable();
+        if(curieRegistryManager != null) curieRegistryManager.registerCurie(curie);
     }
 }

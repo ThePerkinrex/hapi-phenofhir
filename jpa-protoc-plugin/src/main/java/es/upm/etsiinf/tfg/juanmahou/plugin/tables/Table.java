@@ -8,15 +8,27 @@ import es.upm.etsiinf.tfg.juanmahou.plugin.config.Cardinality;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.ConfigCardinality;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.ConfigField;
 import es.upm.etsiinf.tfg.juanmahou.plugin.config.ConfigTable;
-import es.upm.etsiinf.tfg.juanmahou.plugin.render.Accessor;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.BuilderCall;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.enumerated.EnumSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.enumerated.OptionalEnumSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.nested.NestedSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.nested.OptionalNestedSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.nested.RepeatedNestedSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.pk.OptionalPkSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.pk.PkSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.pk.RepeatedPkSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.simple.MapSimpleSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.simple.OptionalSimpleSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.simple.RepeatedSimpleSet;
+import es.upm.etsiinf.tfg.juanmahou.plugin.render.protobuilder.simple.SimpleSet;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.field.*;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.providers.FilePackageProvider;
 import es.upm.etsiinf.tfg.juanmahou.plugin.tables.providers.PackageProvider;
+import es.upm.etsiinf.tfg.juanmahou.plugin.tables.providers.PrefixedPackageProvider;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.Annotation;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.TypeMapping;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.TypeRegistry;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.java.*;
-import es.upm.etsiinf.tfg.juanmahou.plugin.types.source.ProtoMessageSourceType;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.source.SourceType;
 import es.upm.etsiinf.tfg.juanmahou.plugin.util.CaseUtils;
 import es.upm.etsiinf.tfg.juanmahou.plugin.util.HashUtils;
@@ -24,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -58,6 +71,8 @@ public class Table {
     private final Map<String, AbstractFieldDescriptor> fieldDescriptors;
     private Annotation owned;
 
+    private final List<BuilderCall> builderCalls = new ArrayList<>();
+
     public Table(TableManager manager,
                  ConfigTable config,
                  String name,
@@ -89,6 +104,7 @@ public class Table {
                 }
             });
             primaryKey.addAll(pk);
+
         } else if (config.isInsert()) {
             String synthetic = "id";
             if (fieldDescriptors.containsKey(synthetic)) {
@@ -104,6 +120,7 @@ public class Table {
             Field f = new Field(this, synthetic, syntheticType, annotations);
             addField(f);
             // TODO: add descriptor for synthetic if desired
+            // if synthetic no builder call
         } else {
             throw new IllegalStateException("No primary key for " + fullName());
         }
@@ -152,6 +169,7 @@ public class Table {
                 List<Annotation> annotations = new ArrayList<>(List.of(new Annotation(TypeRegistry.ELEMENT_COLLECTION_ANNOTATION), new Annotation(TypeRegistry.MAP_KEY_COLUMN_ANNOTATION)));
                 if (valDesc instanceof PrimitiveFieldDescriptor pValDesc) {
                     val = TypeRegistry.getPrimitive(pValDesc.getType()).getJavaType();
+                    builderCalls.add(new MapSimpleSet(mfd.getName()));
 
                 } else if (valDesc instanceof MessageFieldDescriptor mValDesc) {
                     Descriptors.Descriptor messageType = mValDesc.getMessageType();
@@ -159,12 +177,19 @@ public class Table {
                     TypeMapping mapping = TypeRegistry.getMessage(messageType.getFullName());
                     if (mapping != null) {
                         val = mapping.getJavaType();
+                        builderCalls.add(new MapSimpleSet(mfd.getName(), mapping.getAsProto()));
                     }else{
                         String nestedId = messageType.getFullName();
                         ConfigTable cfg = manager.getConfig(nestedId);
                         if (cfg != null  && cfg.isAsProtobuf()) {
                             val = new PrimitiveType("byte[]");
                             annotations.add(new Annotation(TypeRegistry.LOB_ANNOTATION));
+
+                            String pkg = new FilePackageProvider(mValDesc.getMessageType().getFile()).getPackage();
+                            Function<String, String> asProto = f -> pkg + "." + mValDesc.getMessageType().getName() + ".parseFrom(" + f+ ")";
+
+                            builderCalls.add(new MapSimpleSet(mfd.getName(), asProto));
+
                         }else{
                             String src = "nested#" + fullName();
                             Table child = manager.getTable(nestedId, src);
@@ -173,6 +198,7 @@ public class Table {
                                 return;
                             }
 
+                            builderCalls.add(new MapSimpleSet(mfd.getName(), f -> f + ".asPheno()"));
                             val = child.getJavaType();
                             annotations = List.of(new Annotation(TypeRegistry.MANY_TO_MANY_ANNOTATION), new Annotation(TypeRegistry.MAP_KEY_COLUMN_ANNOTATION));
 
@@ -201,12 +227,15 @@ public class Table {
                 switch (mfd.getCard()) {
                     case REQUIRED -> {
                         annotations.add(new Annotation(TypeRegistry.COLUMN_ANNOTATION, List.of(NULLABLE_FALSE)));
+                        builderCalls.add(new SimpleSet(mfd.getName(), mapping.getAsProto()));
                     }
                     case REPEATED -> {
                         annotations.add(new Annotation(TypeRegistry.ELEMENT_COLLECTION_ANNOTATION));
+                        builderCalls.add(new RepeatedSimpleSet(mfd.getName(), mapping.getAsProto()));
                     }
                     case OPTIONAL -> {
                         annotations.add(new Annotation(TypeRegistry.COLUMN_ANNOTATION, List.of(NULLABLE_TRUE)));
+                        builderCalls.add(new OptionalSimpleSet(mfd.getName(), mapping.getAsProto()));
                     }
                 }
                 Field f = new Field(this, mfd.getName(), mapping.getJavaType(), annotations);
@@ -218,15 +247,20 @@ public class Table {
             if (cfg != null  && cfg.isAsProtobuf()) {
                 mapping = new TypeMapping(SourceType.build(nestedId), new PrimitiveType("byte[]"));
                 List<Annotation> annotations = new ArrayList<>(List.of(new Annotation(TypeRegistry.LOB_ANNOTATION)));
+                String pkg = new FilePackageProvider(mfd.getMessageType().getFile()).getPackage();
+                Function<String, String> asProto = f -> pkg + "." + mfd.getMessageType().getName() + ".parseFrom(" + f+ ")";
                 switch (mfd.getCard()) {
                     case REQUIRED -> {
                         annotations.add(new Annotation(TypeRegistry.COLUMN_ANNOTATION, List.of(NULLABLE_FALSE)));
+                        builderCalls.add(new SimpleSet(mfd.getName(), asProto));
                     }
                     case REPEATED -> {
                         annotations.add(new Annotation(TypeRegistry.ELEMENT_COLLECTION_ANNOTATION));
+                        builderCalls.add(new RepeatedSimpleSet(mfd.getName(), asProto));
                     }
                     case OPTIONAL -> {
                         annotations.add(new Annotation(TypeRegistry.COLUMN_ANNOTATION, List.of(NULLABLE_TRUE)));
+                        builderCalls.add(new OptionalSimpleSet(mfd.getName(), asProto));
                     }
                 }
                 Field f = new Field(this, mfd.getName(), mapping.getJavaType(), annotations);
@@ -257,6 +291,17 @@ public class Table {
             // TODO if part of oneOf -> required goes to optional. child on owned -> optional
             Field parentField;
             Field childField = null;
+            switch (mfd.getCard()) {
+                case REQUIRED -> {
+                    builderCalls.add(new NestedSet(mfd.getName()));
+                }
+                case OPTIONAL -> {
+                    builderCalls.add(new OptionalNestedSet(mfd.getName()));
+                }
+                case REPEATED -> {
+                    builderCalls.add(new RepeatedNestedSet(mfd.getName()));
+                }
+            }
             if(child.getConfig().isInsert()) {
                 List<Annotation> childAnnotations = List.of();
                 String childFieldName = CaseUtils.toLowerCamelCase(getSqlName() + "_" + mfd.getName());
@@ -300,41 +345,6 @@ public class Table {
             if(childField != null) {
                 child.addMappedByField(parentField, childField);
             }
-
-
-//            JavaType childFieldType = this.getJavaType();
-//
-//            List<Annotation> childAnnotations = new ArrayList<>(2);
-//
-//            List<Annotation> annotations = new ArrayList<>(2);
-//            JavaType annotationMapping = TypeRegistry.ONE_TO_MANY_ANNOTATION;
-//            childFieldType = new SetType(childFieldType);
-//            switch (mfd.getCard()) {
-//                case REQUIRED -> {
-//                    annotations.add(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(OPTIONAL_FALSE, LAZY_FETCH)));
-//
-//                    // CHILD ANNOTATIONS
-//
-//                }
-//                case REPEATED -> {
-//                    annotations.add(new Annotation(TypeRegistry.MANY_TO_MANY_ANNOTATION, List.of(LAZY_FETCH)));
-//                    mapping = mapping.toSet();
-//                    // CHILD ANNOTATIONS
-//                    annotationMapping = TypeRegistry.MANY_TO_MANY_ANNOTATION;
-//                }
-//                case OPTIONAL -> {
-//                    annotations.add(new Annotation(TypeRegistry.MANY_TO_ONE_ANNOTATION, List.of(OPTIONAL_TRUE, LAZY_FETCH)));
-//                    // CHILD ANNOTATIONS
-//                }
-//            }
-//            childAnnotations.add(new Annotation(annotationMapping, List.of("mappedBy = \"" + mfd.getName() + "\"", LAZY_FETCH)));
-//            DependencyManager.getInstance().addDependency(fullName(), child.fullName());
-////            child.addMappedByField(this);
-//
-//            Field f = new Field(this, mfd.getName(), mapping.getJavaType(), annotations);
-//            addField(f, oneOfCont);
-//
-//            child.addMappedByField(f, new Field(child, getSqlName() + "_" + f.getName(), childFieldType, childAnnotations));
             return;
         }
 
@@ -352,6 +362,7 @@ public class Table {
             switch (efd.getCard()) {
                 case REQUIRED -> {
                     annotations.add(new Annotation(TypeRegistry.COLUMN_ANNOTATION, List.of(NULLABLE_FALSE)));
+                    builderCalls.add(new EnumSet(efd.getName()));
                 }
                 case REPEATED -> {
                     logger.error("Not handling repeated enums");
@@ -359,6 +370,7 @@ public class Table {
                 }
                 case OPTIONAL -> {
                     annotations.add(new Annotation(TypeRegistry.COLUMN_ANNOTATION, List.of(NULLABLE_TRUE)));
+                    builderCalls.add(new OptionalEnumSet(efd.getName()));
                 }
             }
 
@@ -376,13 +388,28 @@ public class Table {
             switch (pfd.getCard()) {
                 case REQUIRED -> {
                     annotations.add(new Annotation(TypeRegistry.COLUMN_ANNOTATION, List.of(NULLABLE_FALSE)));
+                    if(primaryKey.contains(pfd.getName())) {
+                        builderCalls.add(new PkSet(pfd.getName()));
+                    }else{
+                        builderCalls.add(new SimpleSet(pfd.getName()));
+                    }
                 }
                 case REPEATED -> {
                     type = type.toRepeated();
                     annotations.add(new Annotation(TypeRegistry.ELEMENT_COLLECTION_ANNOTATION));
+                    if(primaryKey.contains(pfd.getName())) {
+                        builderCalls.add(new RepeatedPkSet(pfd.getName()));
+                    }else{
+                        builderCalls.add(new RepeatedSimpleSet(pfd.getName()));
+                    }
                 }
                 case OPTIONAL -> {
                     annotations.add(new Annotation(TypeRegistry.COLUMN_ANNOTATION, List.of(NULLABLE_TRUE)));
+                    if(primaryKey.contains(pfd.getName())) {
+                        builderCalls.add(new OptionalPkSet(pfd.getName()));
+                    }else{
+                        builderCalls.add(new OptionalSimpleSet(pfd.getName()));
+                    }
                 }
             }
             Field f = new Field(this, pfd.getName(), type.getJavaType(), annotations);
@@ -478,6 +505,10 @@ public class Table {
                 '}';
     }
 
+    public List<BuilderCall> getBuilderCalls() {
+        return builderCalls;
+    }
+
     public static Table createRegularTable(
             TableManager manager,
             ConfigTable config,
@@ -490,7 +521,7 @@ public class Table {
             desc.put(fd.getName(), AbstractFieldDescriptor.build(fd, cf));
         });
         return new Table(manager, config, name,
-                new FilePackageProvider(msg.getFile()), desc,
+                new PrefixedPackageProvider(new FilePackageProvider(msg.getFile()), "entities"), desc,
                 createdBy, nested -> msg.getNestedTypes()
                 .stream()
                 .map(Descriptors.Descriptor::getFullName)

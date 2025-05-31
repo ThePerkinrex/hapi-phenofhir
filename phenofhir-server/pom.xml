@@ -115,6 +115,18 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.phenopackets.phenopackettools</groupId>
+			<artifactId>phenopacket-tools-validator-core</artifactId>
+			<version>1.0.0-RC3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.phenopackets.phenopackettools</groupId>
+			<artifactId>phenopacket-tools-validator-jsonschema</artifactId>
+			<version>1.0.0-RC3</version>
+		</dependency>
+
+		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>

@@ -9,6 +9,7 @@ import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRunner;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
+import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.CurieRegistryManager;
 import org.hl7.fhir.r4b.model.Bundle;
 import org.hl7.fhir.r4b.model.Resource;
 import org.slf4j.Logger;
@@ -27,11 +28,13 @@ public class TransactionProvider {
     private static final Logger log = LoggerFactory.getLogger(TransactionProvider.class);
 
     private final ObjectProvider<Resolver> resolverObjectProvider;
+    private final ObjectProvider<CurieRegistryManager> curieRegistryManager;
     private final Config config;
     private final MapperRegistry mapperRegistry;
 
-    public TransactionProvider(ObjectProvider<Resolver> resolverObjectProvider, Config config, MapperRegistry mapperRegistry) {
+    public TransactionProvider(ObjectProvider<Resolver> resolverObjectProvider, ObjectProvider<CurieRegistryManager> curieRegistryManager, Config config, MapperRegistry mapperRegistry) {
         this.resolverObjectProvider = resolverObjectProvider;
+        this.curieRegistryManager = curieRegistryManager;
         this.config = config;
         this.mapperRegistry = mapperRegistry;
     }
@@ -101,12 +104,15 @@ public class TransactionProvider {
         MapperRunner mapper = mapperData.runner();
 
         try {
+            CurieRegistryManager curieRegistryManager = this.curieRegistryManager.getObject();
+            curieRegistryManager.newRegistry();
             mapper.run(List.of(resolved.getResource()), x -> {
                 WithId<?> result = (WithId<?>) x;
                 resolved.setPheno(result);
 
                 response.getEntry().getResponse().setStatus("201");
                 response.getEntry().getResponse().setLocation(response.getPath() + "/" + result.getId().toString());
+                curieRegistryManager.clearRegistry();
             });
         } catch (Exception e) {
             log.error("Error handling {}", resolved, e);

@@ -90,7 +90,7 @@
 					"coding": [
 						{
 							"system": "http://purl.obolibrary.org/obo/mondo.owl",
-							"code": "MONDO_0001071",
+							"code": "0001071",
 							"display": "Intellectual disability"
 						}
 					]
@@ -127,8 +127,8 @@
 					]
 				},
 				"identifier": {
-					"system": "urn:ietf:rfc:3986",
-					"value": "urn:uuid:1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+					"system": "http://phenofhir.github.io",
+					"value": "composition"
 				},
 				"status": "preliminary",
 				"type": {

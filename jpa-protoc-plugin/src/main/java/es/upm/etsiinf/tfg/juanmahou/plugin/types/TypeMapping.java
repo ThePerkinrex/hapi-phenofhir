@@ -7,14 +7,21 @@ import es.upm.etsiinf.tfg.juanmahou.plugin.types.source.RepeatedSourceType;
 import es.upm.etsiinf.tfg.juanmahou.plugin.types.source.SourceType;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 public class TypeMapping {
     private final SourceType source;
     private final JavaType javaType;
+    private final Function<String, String> asProto;
 
-    public TypeMapping(SourceType source, JavaType javaType) {
+    public TypeMapping(SourceType source, JavaType javaType, Function<String, String> asProto) {
         this.source = source;
         this.javaType = javaType;
+        this.asProto = asProto;
+    }
+
+    public TypeMapping(SourceType source, JavaType javaType) {
+        this(source, javaType, Function.identity());
     }
 
     public SourceType getSource() {
@@ -26,11 +33,15 @@ public class TypeMapping {
     }
 
     public TypeMapping toRepeated() {
-        return new TypeMapping(new RepeatedSourceType(source), new ListType(javaType));
+        return new TypeMapping(new RepeatedSourceType(source), new ListType(javaType), asProto);
     }
 
     public TypeMapping toSet() {
-        return new TypeMapping(new RepeatedSourceType(source), new SetType(javaType));
+        return new TypeMapping(new RepeatedSourceType(source), new SetType(javaType), asProto);
+    }
+
+    public Function<String, String> getAsProto() {
+        return asProto;
     }
 
     @Override

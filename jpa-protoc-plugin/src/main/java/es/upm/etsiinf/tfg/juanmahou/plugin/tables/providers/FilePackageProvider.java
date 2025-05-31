@@ -14,7 +14,8 @@ public final class FilePackageProvider implements PackageProvider {
         this.file = Objects.requireNonNull(file, "file");
     }
 
-    private String getPackageInternal() {
+    @Override
+    public String getPackage() {
 //        log.info("Getting package for file {} (proto package {}) ", file.getName(), file.getPackage());
         if (file.getOptions().hasJavaPackage()) {
 //            log.info(" -> javaPackage {}", file.getOptions().getJavaPackage());
@@ -27,10 +28,5 @@ public final class FilePackageProvider implements PackageProvider {
         }
         // Convert path separators to dots
         return name.replace('/', '.').replace('\\', '.');
-    }
-
-    @Override
-    public String getPackage() {
-        return "entities." + getPackageInternal();
     }
 }
