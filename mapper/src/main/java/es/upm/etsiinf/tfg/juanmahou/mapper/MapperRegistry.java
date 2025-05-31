@@ -287,6 +287,10 @@ public class MapperRegistry {
 
     public record MapperAndData(MapperRunner runner, MapperKey key, String name) {}
 
+    public Stream<MapperAndData> getAll() {
+        return mappers.entrySet().stream().flatMap(e -> e.getValue().entrySet().stream().map(x -> new MapperAndData(x.getValue(), e.getKey(), x.getKey())));
+    }
+
     public Stream<MapperAndData> getAllForArgs(List<ResolvableType> args) {
         return mappers
                 .entrySet()

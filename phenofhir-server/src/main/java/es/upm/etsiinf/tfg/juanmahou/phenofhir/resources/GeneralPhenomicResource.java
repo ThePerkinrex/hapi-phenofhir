@@ -34,7 +34,6 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
     private static final Logger log = LoggerFactory.getLogger(GeneralPhenomicResource.class);
     private final Class<? extends IBaseResource> resource;
     private final ResolvableType target;
-    private final Mapping mapping;
     private final MapperRunner resourceMapping;
     private final MapperRunner idMapper;
     private final CrudRepository<Pheno, PhenoKey> repository;
@@ -43,7 +42,6 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
     public GeneralPhenomicResource(
             ResolvableType target,
             ResolvableType resource,
-            Mapping mapping,
             MapperRunner mapper,
             RepositoryProvider repositoryProvider,
             MapperRegistry registry,
@@ -51,7 +49,6 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
     ) {
         if(!ResolvableType.forClass(IBaseResource.class).isAssignableFrom(resource)) throw new RuntimeException("Cant create resource provider for " + resource);
         this.resource = (Class<? extends IBaseResource>) resource.toClass();
-        this.mapping = mapping;
         this.target = target;
         this.resourceMapping = mapper;
         this.idMapper = registry.getMapper(keyUtils.getKeyType(target), List.of(ResolvableType.forClass(IdType.class)));

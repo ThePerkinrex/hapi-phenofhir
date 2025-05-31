@@ -17,45 +17,46 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class GeneralPhenomicResources {
     private static final Logger log = LoggerFactory.getLogger(GeneralPhenomicResources.class);
 
-    private record WithMapping<T>(T data, Mapping mapping) {}
-
     private final Map<ResolvableType, IResourceProvider> resources;
 
     public GeneralPhenomicResources(
-            Config config,
             MapperRegistry registry,
             ObjectProvider<GeneralPhenomicResource<? extends Id, ? extends WithId<?>>> provider,
             RepositoryProvider repositoryProvider,
-            KeyUtils keyUtils,
-            TypeRegistry typeRegistry
-    ) throws ClassNotFoundException, NoSuchMethodException {
-        log.info("Getting mappings {}", config);
-        List<WithMapping<MapperRunner>> resources = new ArrayList<>(config.getMappings().size());
+            KeyUtils keyUtils
+    ) {
         this.resources = new HashMap<>();
 
-        for (Mapping m : config.getMappings()) {
-            ResolvableType source = typeRegistry.resolve(m.getSource());
-            ResolvableType target = typeRegistry.resolve(m.getTarget());
+        List<MapperRegistry.MapperAndData> mappers = registry
+                .getAll()
+                .filter(x -> x.key().params().size() == 1 &&
+                                            !x.key().params().getFirst().as(WithId.class).equalsType(ResolvableType.NONE) &&
+                                            !x.key().ret().as(IBaseResource.class).equalsType(ResolvableType.NONE))
+                .toList();
 
-            if(!ResolvableType.forClass(IBaseResource.class).isAssignableFrom(target)) {
+        for (MapperRegistry.MapperAndData m : mappers) {
+            ResolvableType source = m.key().params().getFirst();
+            ResolvableType target = m.key().ret();
+
+            if (!ResolvableType.forClass(IBaseResource.class).isAssignableFrom(target)) {
                 log.warn("{} is not a resource, skipping", target);
                 continue;
             }
 
-            MapperRunner runner = registry.getMapper(target, List.of(source), m.getName());
-            if(runner == null) throw new RuntimeException("Runner is unexpectedly null");
+            MapperRunner runner = m.runner();
+            if (runner == null) throw new RuntimeException("Runner is unexpectedly null");
 
             GeneralPhenomicResource<? extends Id, ? extends WithId<?>> gpr = provider.getObject(
                     source,
                     target,
-                    m,
                     runner,
                     repositoryProvider,
                     registry,
@@ -71,15 +72,19 @@ public class GeneralPhenomicResources {
 //
 //
 //            Class<?> resource = getClass().getClassLoader().loadClass("org.hl7.fhir.r4b.model." + name);
-//            if(!IBaseResource.class.isAssignableFrom(resource)) throw new ClassNotFoundException(name + " is not a valid resource");
+//            if(!IBaseResource.class.isAssignableFrom(resource)) throw new ClassNotFoundException(name + " is not a
+//            valid resource");
 //            Class<?> target = getClass().getClassLoader().loadClass(mapping.getTarget());
-//            if(!WithId.class.isAssignableFrom(target)) throw new ClassNotFoundException(mapping.getTarget() + " is not a valid phenopacket entity");
+//            if(!WithId.class.isAssignableFrom(target)) throw new ClassNotFoundException(mapping.getTarget() + " is
+//            not a valid phenopacket entity");
 //            @SuppressWarnings("unchecked")
 //            Class<? extends WithId<? extends Id>> castedTarget = (Class<? extends WithId<? extends Id>>) target;
 //            @SuppressWarnings("unchecked")
 //            Class<? extends IBaseResource> castedResource = (Class<? extends IBaseResource>) resource;
-//            ToFhirConfiguredMapping<?, IBaseResource> toFhirConfiguredMapping = new ToFhirConfiguredMapping<>(castedTarget, castedResource, mapping, registry);
-//            ToPhenoConfiguredMapping<?, IBaseResource> toPhenoConfiguredMapping = new ToPhenoConfiguredMapping<>(castedTarget, castedResource, mapping, registry, requestGeneratorContextObjectProvider);
+//            ToFhirConfiguredMapping<?, IBaseResource> toFhirConfiguredMapping = new ToFhirConfiguredMapping<>
+//            (castedTarget, castedResource, mapping, registry);
+//            ToPhenoConfiguredMapping<?, IBaseResource> toPhenoConfiguredMapping = new ToPhenoConfiguredMapping<>
+//            (castedTarget, castedResource, mapping, registry, requestGeneratorContextObjectProvider);
 ////            ResourceMapping<?, IBaseResource> m = new ResourceMapping<>(
 ////                    (Class<? extends WithId<? extends Id>>) target,
 ////                    (Class<? extends IBaseResource>) resource,
@@ -105,7 +110,9 @@ public class GeneralPhenomicResources {
 //                    try {
 //                        withMapping.initialize().initialize();
 //                        var m = withMapping.data();
-//                        return new WithMapping<>(provider.getObject(m.getPhenoClass(), m.getFhirClass(), withMapping.mapping(), m, repositoryProvider, registry), withMapping.initialize(), withMapping.mapping());
+//                        return new WithMapping<>(provider.getObject(m.getPhenoClass(), m.getFhirClass(),
+//                        withMapping.mapping(), m, repositoryProvider, registry), withMapping.initialize(),
+//                        withMapping.mapping());
 //                    }catch (NotFoundException e) {
 //                        return null;
 //                    }
