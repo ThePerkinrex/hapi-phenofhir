@@ -61,28 +61,6 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
         return resource;
     }
 
-//    @Create
-//    @Transactional
-//    public MethodOutcome create(@ResourceParam FHIR resource) throws Exception {
-//        if (resource.getMeta().getProfile().stream().noneMatch(p -> p.getValueAsString().equals(mapping.getProfile()))) {
-//            MethodOutcome outcome = new MethodOutcome();
-//            outcome.setCreated(false);
-//            var oo = new OperationOutcome();
-//            oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR).setCode(OperationOutcome.IssueType.STRUCTURE).setDetails(new CodeableConcept().setText("Resource didn't include the correct profile"));
-//            outcome.setOperationOutcome(oo);
-//            return outcome;
-//        }
-//
-//        WithId<? extends Id> pheno = resourceMapping.toPheno(resource);
-//        log.info("Created {}", pheno);
-//        String id = idMapper.getId(pheno);
-//        log.info("With id: {}", id);
-//
-//        MethodOutcome outcome = new MethodOutcome();
-//        outcome.setId(new IdType().setValue(id));
-//        return outcome;
-//    }
-
     @Read
     @Transactional(readOnly = true)
     public IBaseResource read(@IdParam IdType idType) throws Exception {
@@ -101,17 +79,14 @@ public class GeneralPhenomicResource<PhenoKey extends Id, Pheno extends WithId<P
                 resourceMapping.run(List.of(pheno), fhir -> {
                     log.info("Converted: {}", fhir);
                     IBaseResource baseResource = (IBaseResource) fhir;
-//                    String json = FhirContext.forR4B()
-//                            .newJsonParser()
-//                            .setPrettyPrint(true)
-//                            .encodeResourceToString(baseResource);
-//                    log.info("Converted: {}", json);
                     cf.complete(baseResource);
                 });
             }catch (Exception e) {
                 cf.completeExceptionally(e);
             }
         });
+
+        // There is deferred execution, but it is not parallel, so the result should be computed at this point
 
         return cf.get();
     }
