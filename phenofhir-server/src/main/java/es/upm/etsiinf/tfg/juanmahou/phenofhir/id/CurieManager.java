@@ -3,6 +3,9 @@ package es.upm.etsiinf.tfg.juanmahou.phenofhir.id;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.entities.CurieMapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.CurieMappingRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +13,8 @@ import java.util.*;
 
 @Component
 public class CurieManager {
+    private static final Logger log = LoggerFactory.getLogger(CurieManager.class);
+
     public record System(String system, String version) {
         public System(String system) {
             this(system, null);
@@ -98,7 +103,11 @@ public class CurieManager {
     }
 
     public void registerCurie(String curie) {
-        CurieRegistryManager curieRegistryManager = this.curieRegistryManager.getIfAvailable();
-        if(curieRegistryManager != null) curieRegistryManager.registerCurie(curie);
+        try {
+            CurieRegistryManager curieRegistryManager = this.curieRegistryManager.getObject();
+            curieRegistryManager.registerCurie(curie);
+        } catch (BeansException e) {
+            log.warn("Cant register curie", e);
+        }
     }
 }
