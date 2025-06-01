@@ -57,6 +57,9 @@
 					"sources": ["alternate_ids", "id"],
 					"id": true,
 					"mapper": "PatientIds"
+				},
+				"meta": {
+					"sources": ["string|http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Patient"]
 				}
 			}
 		},
@@ -150,6 +153,9 @@
 				"title": {
 					"sources": ["this|"],
 					"mapper": "phenopacketTitle"
+				},
+				"meta": {
+					"sources": ["string|http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Phenopacket"]
 				}
 			}
 		},
@@ -157,7 +163,9 @@
 			"source": "entities.org.phenopackets.schema.v2.core.Disease",
 			"target": "Condition",
 			"fields": {
-
+				"meta": {
+					"sources": ["string|http://hl7.org/fhir/uv/phenomics-exchange/StructureDefinition/Disease"]
+				}
 			}
 		}
 	]
