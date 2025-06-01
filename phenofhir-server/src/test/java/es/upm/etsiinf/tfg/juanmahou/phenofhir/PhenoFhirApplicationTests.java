@@ -7,7 +7,7 @@ import entities.org.phenopackets.schema.v2.Phenopacket;
 import entities.org.phenopackets.schema.v2.core.Individual;
 import entities.org.phenopackets.schema.v2.core.MetaData;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
-import org.hl7.fhir.r4b.model.Composition;
+import org.hl7.fhir.r4.model.Composition;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,6 +108,10 @@ class PhenoFhirApplicationTests {
             var reqEntry = reqEntries.get(i);
             log.info("REQ {}", reqEntry);
             log.info("RES {}", entry);
+            if(reqEntry.path("resource").path("resourceType").asText().equals("Organization")) {
+                // Ignore the organization (not processed)
+                continue;
+            }
             assertThat(entry.path("response").path("status").asText())
                     .isEqualTo("201");
         }

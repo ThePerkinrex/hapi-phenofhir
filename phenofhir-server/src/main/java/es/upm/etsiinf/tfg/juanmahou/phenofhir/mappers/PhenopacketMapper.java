@@ -14,7 +14,7 @@ import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.CurieRegistryManager;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.reference.ReferenceManager;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.transaction.Resolver;
-import org.hl7.fhir.r4b.model.*;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -159,8 +159,8 @@ public class PhenopacketMapper implements MapperClass {
     }
 
     @Mapper
-    public Enumerations.CompositionStatus loadStatus(Context<?> ctx, String status) {
-        return new Enumerations.CompositionStatusEnumFactory().fromCode(status);
+    public Composition.CompositionStatus loadStatus(Context<?> ctx, String status) {
+        return new Composition.CompositionStatusEnumFactory().fromCode(status);
     }
 
     @Mapper("phenopacketType")

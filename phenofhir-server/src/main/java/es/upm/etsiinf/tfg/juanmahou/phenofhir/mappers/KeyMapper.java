@@ -1,20 +1,18 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.mappers;
 
 import entities.org.phenopackets.schema.v2.Phenopacket;
-import entities.org.phenopackets.schema.v2.core.Disease;
 import entities.org.phenopackets.schema.v2.core.Individual;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperClass;
 import es.upm.etsiinf.tfg.juanmahou.mapper.annotation.Mapper;
 import es.upm.etsiinf.tfg.juanmahou.mapper.context.Context;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.CurieManager;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.IdManager;
-import org.hl7.fhir.r4b.model.Identifier;
+import org.hl7.fhir.r4.model.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.List;
 import java.util.Objects;
 

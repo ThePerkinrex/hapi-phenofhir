@@ -5,8 +5,6 @@ import es.upm.etsiinf.tfg.juanmahou.entities.id.Id;
 import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRunner;
-import es.upm.etsiinf.tfg.juanmahou.mapper.TypeRegistry;
-import es.upm.etsiinf.tfg.juanmahou.mapper.config.Mapping;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.config.Config;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.KeyUtils;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
@@ -28,6 +26,7 @@ public class GeneralPhenomicResources {
     private final Map<ResolvableType, IResourceProvider> resources;
 
     public GeneralPhenomicResources(
+            Config config, // Force load the config so that the mappers are registered
             MapperRegistry registry,
             ObjectProvider<GeneralPhenomicResource<? extends Id, ? extends WithId<?>>> provider,
             RepositoryProvider repositoryProvider,
@@ -37,6 +36,7 @@ public class GeneralPhenomicResources {
 
         List<MapperRegistry.MapperAndData> mappers = registry
                 .getAll()
+                .peek(x -> log.info("Testing {}", x))
                 .filter(x -> x.key().params().size() == 1 &&
                                             !x.key().params().getFirst().as(WithId.class).equalsType(ResolvableType.NONE) &&
                                             !x.key().ret().as(IBaseResource.class).equalsType(ResolvableType.NONE))
@@ -45,6 +45,7 @@ public class GeneralPhenomicResources {
         for (MapperRegistry.MapperAndData m : mappers) {
             ResolvableType source = m.key().params().getFirst();
             ResolvableType target = m.key().ret();
+            log.info("Checking resource {} from {}", target, source);
 
             if (!ResolvableType.forClass(IBaseResource.class).isAssignableFrom(target)) {
                 log.warn("{} is not a resource, skipping", target);
@@ -53,6 +54,7 @@ public class GeneralPhenomicResources {
 
             MapperRunner runner = m.runner();
             if (runner == null) throw new RuntimeException("Runner is unexpectedly null");
+            log.info("Registering resource {} from {}", target, source);
 
             GeneralPhenomicResource<? extends Id, ? extends WithId<?>> gpr = provider.getObject(
                     source,

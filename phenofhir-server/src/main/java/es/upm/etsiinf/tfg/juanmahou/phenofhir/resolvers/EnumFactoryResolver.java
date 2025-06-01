@@ -3,7 +3,7 @@ package es.upm.etsiinf.tfg.juanmahou.phenofhir.resolvers;
 import es.upm.etsiinf.tfg.juanmahou.mapper.TypeRegistry;
 import es.upm.etsiinf.tfg.juanmahou.mapper.context.Context;
 import es.upm.etsiinf.tfg.juanmahou.mapper.resolver.*;
-import org.hl7.fhir.r4b.model.EnumFactory;
+import org.hl7.fhir.r4.model.EnumFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;

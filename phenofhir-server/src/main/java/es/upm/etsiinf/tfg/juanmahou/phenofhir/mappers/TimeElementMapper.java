@@ -8,7 +8,7 @@ import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
 import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRunner;
 import es.upm.etsiinf.tfg.juanmahou.mapper.annotation.Mapper;
 import es.upm.etsiinf.tfg.juanmahou.mapper.context.Context;
-import org.hl7.fhir.r4b.model.*;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;
@@ -27,7 +27,7 @@ public class TimeElementMapper implements MapperClass {
     }
 
     @Mapper
-    public void timeElementMapper(Context<TimeElement> ctx, DataType dataType) throws Exception {
+    public void timeElementMapper(Context<TimeElement> ctx, Type dataType) throws Exception {
         MapperRegistry registry = mapperRegistry.getObject();
 
         if (dataType == null) {

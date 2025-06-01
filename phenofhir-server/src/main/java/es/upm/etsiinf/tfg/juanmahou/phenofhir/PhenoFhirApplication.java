@@ -1,13 +1,11 @@
 	package es.upm.etsiinf.tfg.juanmahou.phenofhir;
 
-	import ca.uhn.fhir.rest.server.IResourceProvider;
 	import ca.uhn.fhir.rest.server.RestfulServer;
 	import ca.uhn.fhir.rest.server.interceptor.RequestValidatingInterceptor;
 	import ca.uhn.fhir.rest.server.interceptor.ResponseValidatingInterceptor;
 	import es.upm.etsiinf.tfg.juanmahou.mapper.MapperRegistry;
 	import es.upm.etsiinf.tfg.juanmahou.phenofhir.resources.GeneralPhenomicResources;
 	import es.upm.etsiinf.tfg.juanmahou.phenofhir.transaction.TransactionProvider;
-	import org.hl7.fhir.r4b.model.Patient;
 	import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
 	import org.springframework.boot.SpringApplication;
@@ -35,7 +33,7 @@
 
 		@Bean
 		public FhirContext fhirContext() {
-			return FhirContext.forR4B();
+			return FhirContext.forR4();
 		}
 
 		@Bean

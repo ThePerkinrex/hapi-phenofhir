@@ -5,8 +5,8 @@ import es.upm.etsiinf.tfg.juanmahou.mapper.MapperClass;
 import es.upm.etsiinf.tfg.juanmahou.mapper.annotation.Mapper;
 import es.upm.etsiinf.tfg.juanmahou.mapper.context.Context;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.CurieManager;
-import org.hl7.fhir.r4b.model.CodeableConcept;
-import org.hl7.fhir.r4b.model.Coding;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 

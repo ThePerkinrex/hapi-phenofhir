@@ -21,7 +21,7 @@ public class TypeRegistry {
         aliases = new HashMap<>();
         try (ScanResult scan = new ClassGraph()
                 // only scan that one package:
-                .acceptPackages("org.hl7.fhir.r4b.model")
+                .acceptPackages("org.hl7.fhir.r4.model")
                 // get all classes (you can also enableAnnotationInfo(), etc.):
                 .enableClassInfo()
                 .scan()) {

@@ -1,6 +1,6 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.id;
 
-import org.hl7.fhir.r4b.model.Identifier;
+import org.hl7.fhir.r4.model.Identifier;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

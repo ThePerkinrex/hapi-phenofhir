@@ -1,6 +1,5 @@
 package es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence;
 
-import es.upm.etsiinf.tfg.juanmahou.entities.id.WithId;
 import es.upm.etsiinf.tfg.juanmahou.mapper.adapter.MapperResultAdapter;
 import jakarta.persistence.Entity;
 import org.slf4j.Logger;
