@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import entities.org.phenopackets.schema.v2.Phenopacket;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.id.CurieManager;
 import es.upm.etsiinf.tfg.juanmahou.phenofhir.persistence.RepositoryProvider;
+import org.hl7.fhir.validation.instance.InstanceValidator;
 import org.junit.jupiter.api.Test;
 import org.phenopackets.phenopackettools.validator.core.ValidationWorkflowRunner;
 import org.phenopackets.phenopackettools.validator.jsonschema.JsonSchemaValidationWorkflowRunner;
@@ -43,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class PhenopacketValidationTests {
-    private static final Logger log = LoggerFactory.getLogger(PhenoFhirApplicationTests.class);
+    private static final Logger log = LoggerFactory.getLogger(PhenopacketValidationTests.class);
     @LocalServerPort
     int port;
 
