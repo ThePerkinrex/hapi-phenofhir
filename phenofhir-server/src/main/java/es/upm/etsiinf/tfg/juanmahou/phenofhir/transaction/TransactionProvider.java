@@ -89,7 +89,7 @@ public class TransactionProvider {
                 .toList();
         if(mappers.isEmpty()) {
             log.warn("No mapper found for {}", resolved);
-            response.getEntry().getResponse().setStatus("404");
+            response.getEntry().getResponse().setStatus("422");
             return;
         } else if (mappers.size() > 1) {
             log.warn("Too many mappers found for {}", resolved);
